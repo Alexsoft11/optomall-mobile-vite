@@ -33,6 +33,19 @@ export default function Layout({ children }: LayoutProps) {
               />
             </div>
           </div>
+          <button
+            onClick={() => {
+              const root = document.documentElement;
+              const isDark = root.classList.toggle("dark");
+              localStorage.setItem("theme", isDark ? "dark" : "light");
+            }}
+            className="size-10 rounded-2xl grid place-items-center bg-white/60 dark:bg-white/10 border border-white/40 dark:border-white/10"
+            aria-label="Toggle theme"
+            title="Toggle theme"
+          >
+            <Sun className="size-4 hidden dark:block" />
+            <Moon className="size-4 dark:hidden" />
+          </button>
         </div>
       </header>
 
