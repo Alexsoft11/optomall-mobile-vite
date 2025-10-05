@@ -24,12 +24,38 @@ const tabs = [
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
+  const navRef = useRef<HTMLDivElement | null>(null);
+  const indicatorRef = useRef<HTMLDivElement | null>(null);
+  const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number }>({ left: 0, width: 0 });
+
   useEffect(() => {
     const saved = localStorage.getItem("theme");
     const root = document.documentElement;
     if (saved === "dark") root.classList.add("dark");
     if (saved === "light") root.classList.remove("dark");
   }, []);
+
+  useLayoutEffect(() => {
+    const container = navRef.current;
+    if (!container) return;
+    const links = Array.from(container.querySelectorAll('a')) as HTMLAnchorElement[];
+    // Find the active index by matching pathname
+    const activeIndex = links.findIndex((a) => {
+      try {
+        const url = new URL(a.href);
+        return url.pathname === window.location.pathname || (url.pathname === '/' && window.location.pathname === '/');
+      } catch (e) {
+        return a.getAttribute('href') === window.location.pathname;
+      }
+    });
+    const target = activeIndex >= 0 ? links[activeIndex] : links[0];
+    if (target) {
+      const rect = target.getBoundingClientRect();
+      const parentRect = container.getBoundingClientRect();
+      setIndicatorStyle({ left: rect.left - parentRect.left + 6, width: rect.width - 12 });
+    }
+  }, [location.pathname]);
+
   return (
     <div className="min-h-dvh bg-background text-foreground flex flex-col">
       {/* Header */}
@@ -68,26 +94,33 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Bottom Nav */}
       <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md">
-        <div className="glass-panel rounded-[50px] p-2 grid grid-cols-4 gap-1">
-          {tabs.map((t) => {
-            const Icon = t.icon;
-            const active = location.pathname === t.to;
-            return (
-              <NavLink key={t.to} to={t.to} className="group">
-                <div
-                  className={cn(
-                    "flex flex-col items-center gap-1 py-2 rounded-[50px] transition-colors px-1.5",
-                    active
-                      ? "bg-gradient-to-b from-primary/20 to-accent/10 text-primary ring-1 ring-white/40"
-                      : "text-foreground/70 hover:text-foreground",
-                  )}
-                >
-                  <Icon className="size-5" />
-                  <span className="text-[11px] leading-none">{t.label}</span>
-                </div>
-              </NavLink>
-            );
-          })}
+        <div ref={navRef} className="relative">
+          <div
+            ref={indicatorRef}
+            className="absolute top-1/2 -translate-y-1/2 h-10 rounded-[50px] bg-primary/20 dark:bg-primary/10 transition-all duration-300 ease-in-out pointer-events-none"
+            style={{ left: indicatorStyle.left, width: indicatorStyle.width }}
+          />
+          <div className="glass-panel rounded-[50px] p-2 grid grid-cols-4 gap-1">
+            {tabs.map((t) => {
+              const Icon = t.icon;
+              const active = location.pathname === t.to;
+              return (
+                <NavLink key={t.to} to={t.to} className="group">
+                  <div
+                    className={cn(
+                      "flex flex-col items-center gap-1 py-2 rounded-[50px] transition-colors px-1.5",
+                      active
+                        ? "text-primary"
+                        : "text-foreground/70 hover:text-foreground",
+                    )}
+                  >
+                    <Icon className={cn("size-5 transition-transform", active ? "scale-110" : "")} />
+                    <span className="text-[11px] leading-none">{t.label}</span>
+                  </div>
+                </NavLink>
+              );
+            })}
+          </div>
         </div>
       </nav>
     </div>
