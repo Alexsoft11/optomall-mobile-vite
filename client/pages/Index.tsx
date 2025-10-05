@@ -133,7 +133,7 @@ export default function Index() {
                 </div>
                 <Link
                   to={`/product/${p.id}`}
-                  className="mt-2 inline-flex items-center justify-center w-full h-9 rounded-xl bg-white/70 dark:bg-white/10 border border-white/30 text-sm hover:ring-2 hover:ring-primary/40"
+                  className="mt-2 inline-flex items-center justify-center w-full h-9 rounded-[20px] bg-white/70 dark:bg-white/10 border border-white/30 text-sm hover:ring-2 hover:ring-primary/40"
                 >
                   Add to cart
                 </Link>
