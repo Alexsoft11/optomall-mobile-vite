@@ -1,6 +1,5 @@
-import { Link } from "react-router-dom";
 import GlassCard from "@/components/GlassCard";
-import { Link } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import { ArrowRight, Sparkles, Star, ShoppingCart, Heart } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
 
@@ -42,12 +41,12 @@ export default function Index() {
             futuristic experience.
           </p>
           <div className="mt-4 flex gap-2">
-            <Link
+            <RouterLink
               to="/marketplace"
               className="inline-flex items-center gap-2 px-4 h-10 rounded-xl bg-primary text-primary-foreground font-medium shadow-md hover:opacity-90 transition"
             >
               Explore <ArrowRight className="size-4" />
-            </Link>
+            </RouterLink>
             <a
               href="#featured"
               className="inline-flex items-center px-4 h-10 rounded-xl bg-white/60 dark:bg-white/10 border border-white/30 text-sm"
@@ -67,12 +66,12 @@ export default function Index() {
           >
             Featured projects
           </h2>
-          <Link
+          <RouterLink
             to="/marketplace"
             className="text-sm text-foreground/70 hover:text-foreground"
           >
             See all
-          </Link>
+          </RouterLink>
         </div>
         <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2">
           {featured.map((f) => (
@@ -115,12 +114,12 @@ export default function Index() {
           >
             Latest products
           </h2>
-          <Link
+          <RouterLink
             to="/marketplace"
             className="text-sm text-foreground/70 hover:text-foreground"
           >
             Browse
-          </Link>
+          </RouterLink>
         </div>
         <div className="grid grid-cols-2 gap-4">
           {latest.map((p) => (
