@@ -27,6 +27,7 @@ const tabs = [
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
+  const { cart, favorites } = useShop();
   const navRef = useRef<HTMLDivElement | null>(null);
   const indicatorRef = useRef<HTMLDivElement | null>(null);
   const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number }>({ left: 0, width: 0 });
