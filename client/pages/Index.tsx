@@ -18,6 +18,8 @@ const latest = [
 ];
 
 export default function Index() {
+  const { addToCart, toggleFavorite, isFavorite } = useShop();
+
   return (
     <div className="px-4 pb-6 pt-4 space-y-6">
       {/* Hero Banner */}
