@@ -18,6 +18,7 @@ interface LayoutProps {
 const tabs = [
   { to: "/", label: "Home", icon: Home },
   { to: "/marketplace", label: "Shop", icon: Grid3X3 },
+  { to: "/favorites", label: "Favorites", icon: Heart },
   { to: "/cart", label: "Cart", icon: ShoppingCart },
   { to: "/profile", label: "Profile", icon: User },
 ];
