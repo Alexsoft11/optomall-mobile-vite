@@ -11,8 +11,10 @@ import Marketplace from "./pages/Marketplace";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Profile from "./pages/Profile";
+import Favorites from "./pages/Favorites";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
+import { ShopProvider } from "./context/ShopContext";
 
 const queryClient = new QueryClient();
 
