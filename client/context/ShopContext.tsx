@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 
 type Product = {
   id: number;
@@ -47,12 +53,23 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     setCart((s) => s.filter((it) => it.id !== id));
   };
   const toggleFavorite = (id: number) => {
-    setFavorites((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+    setFavorites((s) =>
+      s.includes(id) ? s.filter((x) => x !== id) : [...s, id],
+    );
   };
   const isFavorite = (id: number) => favorites.includes(id);
 
   return (
-    <ShopContext.Provider value={{ cart, favorites, addToCart, removeFromCart, toggleFavorite, isFavorite }}>
+    <ShopContext.Provider
+      value={{
+        cart,
+        favorites,
+        addToCart,
+        removeFromCart,
+        toggleFavorite,
+        isFavorite,
+      }}
+    >
       {children}
     </ShopContext.Provider>
   );

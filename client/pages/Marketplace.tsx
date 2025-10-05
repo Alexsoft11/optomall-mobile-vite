@@ -1,10 +1,19 @@
 import GlassCard from "@/components/GlassCard";
-import { SlidersHorizontal, Filter, ChevronDown, ShoppingCart, Heart } from "lucide-react";
+import {
+  SlidersHorizontal,
+  Filter,
+  ChevronDown,
+  ShoppingCart,
+  Heart,
+} from "lucide-react";
 import { useShop } from "@/context/ShopContext";
 
 const products = Array.from({ length: 12 }).map((_, i) => ({
   id: i + 1,
-  name: ["Aero Chair", "Flux Lamp", "Mono Sofa", "Prism Table"][i % 4] + " " + (i + 1),
+  name:
+    ["Aero Chair", "Flux Lamp", "Mono Sofa", "Prism Table"][i % 4] +
+    " " +
+    (i + 1),
   price: 99 + i * 7,
 }));
 
@@ -43,13 +52,24 @@ export default function Marketplace() {
                 aria-label="Toggle favorite"
                 className="absolute top-2 right-2 size-9 rounded-lg grid place-items-center bg-white/60 dark:bg-white/10 border border-white/20"
               >
-                <Heart className={isFavorite(p.id) ? "size-4 text-destructive" : "size-4 text-foreground/60"} />
+                <Heart
+                  className={
+                    isFavorite(p.id)
+                      ? "size-4 text-destructive"
+                      : "size-4 text-foreground/60"
+                  }
+                />
               </button>
             </div>
             <div className="p-3">
               <div className="text-sm font-medium truncate">{p.name}</div>
-              <div className="mt-1 text-xs text-foreground/70">UZS {(p.price * 12450).toLocaleString()}</div>
-              <button onClick={() => addToCart(p)} className="mt-2 inline-flex items-center justify-center w-full h-9 rounded-[20px] bg-primary text-primary-foreground text-sm">
+              <div className="mt-1 text-xs text-foreground/70">
+                UZS {(p.price * 12450).toLocaleString()}
+              </div>
+              <button
+                onClick={() => addToCart(p)}
+                className="mt-2 inline-flex items-center justify-center w-full h-9 rounded-[20px] bg-primary text-primary-foreground text-sm"
+              >
                 <ShoppingCart className="size-4 mr-2" /> Add
               </button>
             </div>

@@ -133,7 +133,13 @@ export default function Index() {
                   aria-label="Toggle favorite"
                   className="absolute top-2 right-2 size-9 rounded-lg grid place-items-center bg-white/60 dark:bg-white/10 border border-white/20"
                 >
-                  <Heart className={isFavorite(p.id) ? "size-4 text-destructive" : "size-4 text-foreground/60"} />
+                  <Heart
+                    className={
+                      isFavorite(p.id)
+                        ? "size-4 text-destructive"
+                        : "size-4 text-foreground/60"
+                    }
+                  />
                 </button>
               </div>
               <div className="p-3">

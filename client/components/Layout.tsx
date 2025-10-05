@@ -30,7 +30,10 @@ export default function Layout({ children }: LayoutProps) {
   const { cart, favorites } = useShop();
   const navRef = useRef<HTMLDivElement | null>(null);
   const indicatorRef = useRef<HTMLDivElement | null>(null);
-  const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number }>({ left: 0, width: 0 });
+  const [indicatorStyle, setIndicatorStyle] = useState<{
+    left: number;
+    width: number;
+  }>({ left: 0, width: 0 });
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
@@ -42,21 +45,29 @@ export default function Layout({ children }: LayoutProps) {
   useLayoutEffect(() => {
     const container = navRef.current;
     if (!container) return;
-    const links = Array.from(container.querySelectorAll('a')) as HTMLAnchorElement[];
+    const links = Array.from(
+      container.querySelectorAll("a"),
+    ) as HTMLAnchorElement[];
     // Find the active index by matching pathname
     const activeIndex = links.findIndex((a) => {
       try {
         const url = new URL(a.href);
-        return url.pathname === window.location.pathname || (url.pathname === '/' && window.location.pathname === '/');
+        return (
+          url.pathname === window.location.pathname ||
+          (url.pathname === "/" && window.location.pathname === "/")
+        );
       } catch (e) {
-        return a.getAttribute('href') === window.location.pathname;
+        return a.getAttribute("href") === window.location.pathname;
       }
     });
     const target = activeIndex >= 0 ? links[activeIndex] : links[0];
     if (target) {
       const rect = target.getBoundingClientRect();
       const parentRect = container.getBoundingClientRect();
-      setIndicatorStyle({ left: rect.left - parentRect.left + 6, width: rect.width - 12 });
+      setIndicatorStyle({
+        left: rect.left - parentRect.left + 6,
+        width: rect.width - 12,
+      });
     }
   }, [location.pathname]);
 
@@ -104,7 +115,12 @@ export default function Layout({ children }: LayoutProps) {
             className="absolute top-1/2 -translate-y-1/2 h-10 rounded-[50px] bg-primary/20 dark:bg-primary/10 transition-all duration-300 ease-in-out pointer-events-none"
             style={{ left: indicatorStyle.left, width: indicatorStyle.width }}
           />
-          <div className="glass-panel rounded-[50px] p-1 grid gap-1" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+          <div
+            className="glass-panel rounded-[50px] p-1 grid gap-1"
+            style={{
+              gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))`,
+            }}
+          >
             {tabs.map((t) => {
               const Icon = t.icon;
               const active = location.pathname === t.to;
@@ -120,7 +136,12 @@ export default function Layout({ children }: LayoutProps) {
                         : "text-foreground/70 hover:text-foreground",
                     )}
                   >
-                    <Icon className={cn("size-4 transition-transform", active ? "scale-110" : "")} />
+                    <Icon
+                      className={cn(
+                        "size-4 transition-transform",
+                        active ? "scale-110" : "",
+                      )}
+                    />
                     <span className="text-[10px] leading-none">{t.label}</span>
                   </div>
                   {isCart && cart.length > 0 && (
