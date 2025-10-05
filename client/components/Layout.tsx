@@ -11,6 +11,7 @@ import {
   Heart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useShop } from "@/context/ShopContext";
 
 interface LayoutProps {
   children: ReactNode;
