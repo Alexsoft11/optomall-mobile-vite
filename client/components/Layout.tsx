@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { Home, Grid3X3, ShoppingCart, User, Search, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
