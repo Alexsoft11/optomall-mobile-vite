@@ -12,7 +12,7 @@ export default function GlassCard({
     <div
       className={cn(
         "glass-panel rounded-2xl border border-white/40 dark:border-white/10 shadow-xl",
-        className
+        className,
       )}
     >
       {children}
