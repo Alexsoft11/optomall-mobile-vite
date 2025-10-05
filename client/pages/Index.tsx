@@ -1,62 +1,115 @@
-import { DemoResponse } from "@shared/api";
-import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import GlassCard from "@/components/GlassCard";
+import { ArrowRight, Sparkles, Star } from "lucide-react";
+
+const featured = [
+  { id: 1, title: "Futurist Living Room", by: "Zetta Studio" },
+  { id: 2, title: "Matte Kitchen Set", by: "Nova Interior" },
+  { id: 3, title: "Glasmorph Office", by: "Aero Design" },
+];
+
+const latest = [
+  { id: 101, name: "Orbit Chair", price: 249.0 },
+  { id: 102, name: "Halo Lamp", price: 129.0 },
+  { id: 103, name: "Nebula Sofa", price: 899.0 },
+  { id: 104, name: "Prism Table", price: 459.0 },
+];
 
 export default function Index() {
-  const [exampleFromServer, setExampleFromServer] = useState("");
-  // Fetch users on component mount
-  useEffect(() => {
-    fetchDemo();
-  }, []);
-
-  // Example of how to fetch data from the server (if needed)
-  const fetchDemo = async () => {
-    try {
-      const response = await fetch("/api/demo");
-      const data = (await response.json()) as DemoResponse;
-      setExampleFromServer(data.message);
-    } catch (error) {
-      console.error("Error fetching hello:", error);
-    }
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
-      <div className="text-center">
-        {/* TODO: FUSION_GENERATION_APP_PLACEHOLDER replace everything here with the actual app! */}
-        <h1 className="text-2xl font-semibold text-slate-800 flex items-center justify-center gap-3">
-          <svg
-            className="animate-spin h-8 w-8 text-slate-400"
-            viewBox="0 0 50 50"
-          >
-            <circle
-              className="opacity-30"
-              cx="25"
-              cy="25"
-              r="20"
-              stroke="currentColor"
-              strokeWidth="5"
-              fill="none"
-            />
-            <circle
-              className="text-slate-600"
-              cx="25"
-              cy="25"
-              r="20"
-              stroke="currentColor"
-              strokeWidth="5"
-              fill="none"
-              strokeDasharray="100"
-              strokeDashoffset="75"
-            />
-          </svg>
-          Generating your app...
-        </h1>
-        <p className="mt-4 text-slate-600 max-w-md">
-          Watch the chat on the left for updates that might need your attention
-          to finish generating
-        </p>
-        <p className="mt-4 hidden max-w-md">{exampleFromServer}</p>
-      </div>
+    <div className="px-4 pb-6 pt-4 space-y-6">
+      {/* Hero Banner */}
+      <GlassCard className="neon-card rounded-3xl overflow-hidden">
+        <div className="p-5 relative">
+          <div className="absolute -top-10 -right-10 size-40 rounded-full blur-3xl opacity-40 bg-primary/40" />
+          <div className="absolute bottom-0 -left-10 size-28 rounded-full blur-3xl opacity-40 bg-accent/40" />
+          <div className="flex items-center gap-2 text-xs text-foreground/70">
+            <Sparkles className="size-3.5" />
+            Hi‑tech marketplace
+          </div>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight" style={{ fontFamily: 'Poppins, Inter, sans-serif' }}>
+            Optomall.uz
+          </h1>
+          <p className="mt-1 text-foreground/70 text-sm">
+            Interior design projects and curated products in one minimal, futuristic experience.
+          </p>
+          <div className="mt-4 flex gap-2">
+            <Link
+              to="/marketplace"
+              className="inline-flex items-center gap-2 px-4 h-10 rounded-xl bg-primary text-primary-foreground font-medium shadow-md hover:opacity-90 transition"
+            >
+              Explore <ArrowRight className="size-4" />
+            </Link>
+            <a
+              href="#featured"
+              className="inline-flex items-center px-4 h-10 rounded-xl bg-white/60 dark:bg-white/10 border border-white/30 text-sm"
+            >
+              Featured
+            </a>
+          </div>
+        </div>
+      </GlassCard>
+
+      {/* Featured Projects */}
+      <section id="featured" className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold" style={{ fontFamily: 'Poppins, Inter, sans-serif' }}>Featured projects</h2>
+          <Link to="/marketplace" className="text-sm text-foreground/70 hover:text-foreground">See all</Link>
+        </div>
+        <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2">
+          {featured.map((f) => (
+            <GlassCard key={f.id} className="min-w-[260px] snap-start overflow-hidden">
+              <div className="h-36 bg-gradient-to-tr from-primary/30 to-accent/20" />
+              <div className="p-4">
+                <div className="text-sm font-medium">{f.title}</div>
+                <div className="text-xs text-foreground/70">by {f.by}</div>
+              </div>
+            </GlassCard>
+          ))}
+        </div>
+      </section>
+
+      {/* Latest Products */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold" style={{ fontFamily: 'Poppins, Inter, sans-serif' }}>Latest products</h2>
+          <Link to="/marketplace" className="text-sm text-foreground/70 hover:text-foreground">Browse</Link>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          {latest.map((p) => (
+            <GlassCard key={p.id} className="overflow-hidden">
+              <div className="h-28 bg-gradient-to-b from-muted to-card relative">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="size-14 rounded-xl bg-gradient-to-br from-primary/40 to-accent/30 glow-ring" />
+                </div>
+              </div>
+              <div className="p-3">
+                <div className="text-sm font-medium truncate">{p.name}</div>
+                <div className="mt-1 text-xs text-foreground/70">UZS {(p.price * 12450).toLocaleString()}</div>
+                <Link
+                  to={`/product/${p.id}`}
+                  className="mt-2 inline-flex items-center justify-center w-full h-9 rounded-xl bg-white/70 dark:bg-white/10 border border-white/30 text-sm hover:ring-2 hover:ring-primary/40"
+                >
+                  Add to cart
+                </Link>
+              </div>
+            </GlassCard>
+          ))}
+        </div>
+      </section>
+
+      {/* Banner */}
+      <GlassCard className="rounded-2xl p-4 flex items-center gap-3">
+        <div className="size-10 rounded-xl bg-gradient-to-br from-primary/50 to-accent/40" />
+        <div className="text-sm">
+          <div className="font-medium">Premium Designers</div>
+          <div className="text-foreground/70 text-xs">Curated talents for your next project</div>
+        </div>
+        <div className="ml-auto flex items-center gap-1 text-amber-500">
+          <Star className="size-4 fill-amber-500" />
+          <span className="text-xs">Top rated</span>
+        </div>
+      </GlassCard>
     </div>
   );
 }
