@@ -104,7 +104,7 @@ export default function Layout({ children }: LayoutProps) {
             className="absolute top-1/2 -translate-y-1/2 h-10 rounded-[50px] bg-primary/20 dark:bg-primary/10 transition-all duration-300 ease-in-out pointer-events-none"
             style={{ left: indicatorStyle.left, width: indicatorStyle.width }}
           />
-          <div className="glass-panel rounded-[50px] p-2 grid grid-cols-4 gap-1">
+          <div className="glass-panel rounded-[50px] p-1 grid gap-1" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
             {tabs.map((t) => {
               const Icon = t.icon;
               const active = location.pathname === t.to;
@@ -114,14 +114,14 @@ export default function Layout({ children }: LayoutProps) {
                 <NavLink key={t.to} to={t.to} className="group relative">
                   <div
                     className={cn(
-                      "flex flex-col items-center gap-1 py-2 rounded-[50px] transition-colors px-1.5",
+                      "flex flex-col items-center gap-0.5 py-1.5 rounded-[50px] transition-colors px-2",
                       active
                         ? "text-primary"
                         : "text-foreground/70 hover:text-foreground",
                     )}
                   >
-                    <Icon className={cn("size-5 transition-transform", active ? "scale-110" : "")} />
-                    <span className="text-[11px] leading-none">{t.label}</span>
+                    <Icon className={cn("size-4 transition-transform", active ? "scale-110" : "")} />
+                    <span className="text-[10px] leading-none">{t.label}</span>
                   </div>
                   {isCart && cart.length > 0 && (
                     <div className="absolute -top-1 -right-1 bg-destructive text-white text-[10px] w-5 h-5 rounded-full grid place-items-center">
