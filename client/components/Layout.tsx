@@ -16,6 +16,12 @@ const tabs = [
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
+  useEffect(() => {
+    const saved = localStorage.getItem("theme");
+    const root = document.documentElement;
+    if (saved === "dark") root.classList.add("dark");
+    if (saved === "light") root.classList.remove("dark");
+  }, []);
   return (
     <div className="min-h-dvh bg-background text-foreground flex flex-col">
       {/* Header */}
