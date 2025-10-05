@@ -59,7 +59,14 @@ export default function Index() {
         <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2">
           {featured.map((f) => (
             <GlassCard key={f.id} className="min-w-[260px] snap-start overflow-hidden">
-              <div className="h-36 bg-gradient-to-tr from-primary/30 to-accent/20" />
+              <div className="font-normal h-36">
+                <img
+                  loading="lazy"
+                  src="https://cdn.builder.io/api/v1/image/assets%2FYJIGb4i01jvw0SRdL5Bt%2F72c80f114dc149019051b6852a9e3b7a?width=800"
+                  srcSet="https://cdn.builder.io/api/v1/image/assets%2FYJIGb4i01jvw0SRdL5Bt%2F72c80f114dc149019051b6852a9e3b7a?width=100 100w, https://cdn.builder.io/api/v1/image/assets%2FYJIGb4i01jvw0SRdL5Bt%2F72c80f114dc149019051b6852a9e3b7a?width=200 200w, https://cdn.builder.io/api/v1/image/assets%2FYJIGb4i01jvw0SRdL5Bt%2F72c80f114dc149019051b6852a9e3b7a?width=400 400w, https://cdn.builder.io/api/v1/image/assets%2FYJIGb4i01jvw0SRdL5Bt%2F72c80f114dc149019051b6852a9e3b7a?width=800 800w, https://cdn.builder.io/api/v1/image/assets%2FYJIGb4i01jvw0SRdL5Bt%2F72c80f114dc149019051b6852a9e3b7a?width=1200 1200w, https://cdn.builder.io/api/v1/image/assets%2FYJIGb4i01jvw0SRdL5Bt%2F72c80f114dc149019051b6852a9e3b7a?width=1600 1600w, https://cdn.builder.io/api/v1/image/assets%2FYJIGb4i01jvw0SRdL5Bt%2F72c80f114dc149019051b6852a9e3b7a?width=2000 2000w"
+                  style={{ aspectRatio: "1.42", objectFit: "cover", objectPosition: "center", width: "100%", marginTop: "20px", minHeight: "20px", minWidth: "20px", overflow: "hidden" }}
+                />
+              </div>
               <div className="p-4">
                 <div className="text-sm font-medium">{f.title}</div>
                 <div className="text-xs text-foreground/70">by {f.by}</div>
