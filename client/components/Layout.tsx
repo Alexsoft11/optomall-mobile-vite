@@ -107,8 +107,10 @@ export default function Layout({ children }: LayoutProps) {
             {tabs.map((t) => {
               const Icon = t.icon;
               const active = location.pathname === t.to;
+              const isCart = t.to === "/cart";
+              const isFav = t.to === "/favorites";
               return (
-                <NavLink key={t.to} to={t.to} className="group">
+                <NavLink key={t.to} to={t.to} className="group relative">
                   <div
                     className={cn(
                       "flex flex-col items-center gap-1 py-2 rounded-[50px] transition-colors px-1.5",
@@ -120,6 +122,16 @@ export default function Layout({ children }: LayoutProps) {
                     <Icon className={cn("size-5 transition-transform", active ? "scale-110" : "")} />
                     <span className="text-[11px] leading-none">{t.label}</span>
                   </div>
+                  {isCart && cart.length > 0 && (
+                    <div className="absolute -top-1 -right-1 bg-destructive text-white text-[10px] w-5 h-5 rounded-full grid place-items-center">
+                      {cart.length}
+                    </div>
+                  )}
+                  {isFav && favorites.length > 0 && (
+                    <div className="absolute -top-1 -right-1 bg-primary text-white text-[10px] w-5 h-5 rounded-full grid place-items-center">
+                      {favorites.length}
+                    </div>
+                  )}
                 </NavLink>
               );
             })}
