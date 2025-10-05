@@ -127,18 +127,26 @@ export default function Index() {
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="size-14 rounded-xl bg-gradient-to-br from-primary/40 to-accent/30 glow-ring" />
                 </div>
+                <button
+                  onClick={() => toggleFavorite(p.id)}
+                  aria-label="Toggle favorite"
+                  className="absolute top-2 right-2 size-9 rounded-lg grid place-items-center bg-white/60 dark:bg-white/10 border border-white/20"
+                >
+                  <Heart className={isFavorite(p.id) ? "size-4 text-destructive" : "size-4 text-foreground/60"} />
+                </button>
               </div>
               <div className="p-3">
                 <div className="text-sm font-medium truncate">{p.name}</div>
                 <div className="mt-1 text-xs text-foreground/70">
                   UZS {(p.price * 12450).toLocaleString()}
                 </div>
-                <Link
-                  to={`/product/${p.id}`}
-                  className="mt-2 inline-flex items-center justify-center w-full h-9 rounded-[20px] bg-white/70 dark:bg-white/10 border border-white/30 text-sm hover:ring-2 hover:ring-primary/40"
+                <button
+                  onClick={() => addToCart(p)}
+                  className="mt-2 inline-flex items-center justify-center gap-2 w-full h-9 rounded-[20px] bg-white/70 dark:bg-white/10 border border-white/30 text-sm hover:ring-2 hover:ring-primary/40"
                 >
+                  <ShoppingCart className="size-4" />
                   Add to cart
-                </Link>
+                </button>
               </div>
             </GlassCard>
           ))}
