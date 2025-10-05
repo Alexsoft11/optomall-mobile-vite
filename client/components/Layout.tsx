@@ -68,7 +68,7 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Bottom Nav */}
       <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md">
-        <div className="glass-panel rounded-2xl p-2 grid grid-cols-4 gap-1">
+        <div className="glass-panel rounded-[50px] p-2 grid grid-cols-4 gap-1">
           {tabs.map((t) => {
             const Icon = t.icon;
             const active = location.pathname === t.to;
