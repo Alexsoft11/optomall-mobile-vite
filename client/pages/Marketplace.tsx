@@ -44,7 +44,7 @@ export default function Marketplace() {
               <div className="mt-1 text-xs text-foreground/70">
                 UZS {(p.price * 12450).toLocaleString()}
               </div>
-              <button className="mt-2 inline-flex items-center justify-center w-full h-9 rounded-xl bg-primary text-primary-foreground text-sm">
+              <button className="mt-2 inline-flex items-center justify-center w-full h-9 rounded-[20px] bg-primary text-primary-foreground text-sm">
                 Add
               </button>
             </div>
