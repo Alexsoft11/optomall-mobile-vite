@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import GlassCard from "@/components/GlassCard";
-import { ArrowRight, Sparkles, Star } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowRight, Sparkles, Star, ShoppingCart, Heart } from "lucide-react";
+import { useShop } from "@/context/ShopContext";
 
 const featured = [
   { id: 1, title: "Futurist Living Room", by: "Zetta Studio" },
