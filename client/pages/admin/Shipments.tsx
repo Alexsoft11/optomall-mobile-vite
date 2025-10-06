@@ -97,6 +97,26 @@ export default function AdminShipments() {
     return `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(tracking)}`;
   }
 
+  // Exports and printing
+  import { downloadCSV, printHTML } from "@/lib/export";
+
+  const exportCSV = () => {
+    const rows = items.map((s) => ({ id: s.id, order_id: s.order_id, status: s.status, tracking: s.tracking_number, warehouse: s.warehouse, carrier: s.carrier, notes: s.notes, created_at: s.created_at }));
+    downloadCSV(`shipments_${Date.now()}.csv`, rows, ["id", "order_id", "status", "tracking", "warehouse", "carrier", "notes", "created_at"]);
+  };
+
+  const printTable = () => {
+    const html = `
+      <table>
+        <thead><tr><th>ID</th><th>Order</th><th>Status</th><th>Tracking</th><th>Warehouse</th><th>Carrier</th><th>Notes</th><th>Created</th></tr></thead>
+        <tbody>
+          ${items.map(s => `<tr><td>${s.id}</td><td>${s.order_id}</td><td>${s.status}</td><td>${s.tracking_number||''}</td><td>${s.warehouse||''}</td><td>${s.carrier||''}</td><td>${(s.notes||'').replace(/</g,'&lt;')}</td><td>${s.created_at||''}</td></tr>`).join('')}
+        </tbody>
+      </table>
+    `;
+    printHTML('Shipments', html);
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
