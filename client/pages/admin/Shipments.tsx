@@ -59,6 +59,48 @@ export default function AdminShipments() {
     }
   }
 
+  // Bulk actions
+  const toggleSelect = (id: number) => {
+    setSelectedIds((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  };
+  const toggleSelectAll = () => {
+    if (selectedIds.length === items.length) setSelectedIds([]);
+    else setSelectedIds(items.map((i) => i.id));
+  };
+
+  const bulkUpdateStatus = async (status: string) => {
+    if (selectedIds.length === 0) return alert('No items selected');
+    try {
+      const { error } = await supabase.from('shipments').update({ status, updated_at: new Date().toISOString() }).in('id', selectedIds);
+      if (error) throw error;
+      setSelectedIds([]);
+      await load();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update status');
+    }
+  };
+
+  const bulkExportSelected = () => {
+    if (selectedIds.length === 0) return alert('No items selected');
+    const rows = items.filter((s) => selectedIds.includes(s.id)).map((s) => ({ id: s.id, order_id: s.order_id, status: s.status, tracking: s.tracking_number, warehouse: s.warehouse, carrier: s.carrier, notes: s.notes, created_at: s.created_at }));
+    downloadCSV(`shipments_selected_${Date.now()}.csv`, rows, ["id", "order_id", "status", "tracking", "warehouse", "carrier", "notes", "created_at"]);
+  };
+
+  const bulkDeleteSelected = async () => {
+    if (selectedIds.length === 0) return alert('No items selected');
+    if (!confirm(`Delete ${selectedIds.length} shipments?`)) return;
+    try {
+      const { error } = await supabase.from('shipments').delete().in('id', selectedIds);
+      if (error) throw error;
+      setSelectedIds([]);
+      await load();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete selected');
+    }
+  };
+
   async function uploadFile(file: File, prefix = "shipments") {
     if (!supabase) throw new Error("Supabase not configured");
     setUploading(true);
