@@ -6,8 +6,12 @@ CREATE TABLE IF NOT EXISTS products (
   description text,
   price numeric(10,2) NOT NULL DEFAULT 0,
   images jsonb DEFAULT '[]',
+  status text DEFAULT 'active',
   created_at timestamptz DEFAULT now()
 );
+
+-- If products table already exists without status, ensure column exists
+ALTER TABLE products ADD COLUMN IF NOT EXISTS status text DEFAULT 'active';
 
 -- Seed sample products
 INSERT INTO products (name, description, price, images) VALUES
