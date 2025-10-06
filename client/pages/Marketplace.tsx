@@ -8,9 +8,12 @@ import {
 } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
 import { products } from "@/data/products";
+import { useProducts } from "@/hooks/useProducts";
 
 export default function Marketplace() {
   const { addToCart, toggleFavorite, isFavorite } = useShop();
+  const { items, loading } = useProducts();
+  const productsList = items;
 
   return (
     <div className="px-4 pb-6 pt-4 space-y-4">
