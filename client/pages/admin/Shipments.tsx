@@ -210,6 +210,7 @@ export default function AdminShipments() {
           <table className="w-full table-auto bg-white rounded shadow">
             <thead>
               <tr className="text-left">
+                <th className="p-2"><input type="checkbox" checked={selectedIds.length === items.length && items.length > 0} onChange={toggleSelectAll} /></th>
                 <th className="p-2">ID</th>
                 <th className="p-2">Order</th>
                 <th className="p-2">Status</th>
@@ -223,6 +224,7 @@ export default function AdminShipments() {
             <tbody>
               {items.map((s) => (
                 <tr key={s.id} className="border-t">
+                  <td className="p-2 align-top"><input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} /></td>
                   <td className="p-2 align-top">{s.id}</td>
                   <td className="p-2 align-top">{s.order_id}</td>
                   <td className="p-2 align-top">
