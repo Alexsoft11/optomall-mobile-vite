@@ -18,3 +18,17 @@ INSERT INTO products (name, description, price, images) VALUES
 ('Running Shoes', 'Lightweight running shoes with breathable mesh.', 89.99, '["https://picsum.photos/seed/shoes/600/600"]'),
 ('Wireless Charger', 'Fast wireless charger compatible with Qi devices.', 39.95, '["https://picsum.photos/seed/charger/600/600"]'),
 ('Bluetooth Speaker', 'Portable Bluetooth speaker with 12h battery life.', 59.99, '["https://picsum.photos/seed/speaker/600/600"]');
+
+-- Sessions table to persist cart/favorites for guest sessions
+CREATE TABLE IF NOT EXISTS sessions (
+  session_key text PRIMARY KEY,
+  cart jsonb DEFAULT '[]',
+  favorites jsonb DEFAULT '[]',
+  updated_at timestamptz DEFAULT now()
+);
+
+-- Index to speed up session lookups
+CREATE INDEX IF NOT EXISTS idx_sessions_session_key ON sessions (session_key);
+
+-- Example upsert for sessions
+-- INSERT INTO sessions (session_key, cart, favorites) VALUES ('guest-123', '[]', '[]') ON CONFLICT (session_key) DO UPDATE SET cart = EXCLUDED.cart, favorites = EXCLUDED.favorites, updated_at = now();
