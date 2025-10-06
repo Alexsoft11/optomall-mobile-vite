@@ -183,6 +183,26 @@ export default function AdminShipments() {
 
       <BucketChecker bucket="shipment-docs" label="Shipment documents & photos (shipment-docs)" />
 
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <label className="inline-flex items-center gap-2">
+            <input type="checkbox" checked={selectedIds.length === items.length && items.length > 0} onChange={toggleSelectAll} />
+            <span className="text-sm">Select all</span>
+          </label>
+          <span className="text-sm text-slate-500">{selectedIds.length} selected</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <select value={bulkStatus} onChange={(e) => setBulkStatus(e.target.value)} className="p-2 border rounded">
+            {STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+          <button onClick={() => bulkUpdateStatus(bulkStatus)} className="px-3 py-1 bg-blue-600 text-white rounded" disabled={selectedIds.length===0}>Apply status</button>
+          <button onClick={() => bulkExportSelected()} className="px-3 py-1 bg-green-600 text-white rounded" disabled={selectedIds.length===0}>Export Selected</button>
+          <button onClick={() => bulkDeleteSelected()} className="px-3 py-1 bg-red-600 text-white rounded" disabled={selectedIds.length===0}>Delete Selected</button>
+        </div>
+      </div>
+
       {loading ? (
         <div>Loading...</div>
       ) : (
