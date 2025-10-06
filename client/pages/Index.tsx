@@ -2,19 +2,10 @@ import GlassCard from "@/components/GlassCard";
 import { Link as RouterLink } from "react-router-dom";
 import { ArrowRight, Sparkles, Star, ShoppingCart, Heart } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
+import { products } from "@/data/products";
 
-const featured = [
-  { id: 1, title: "Futurist Living Room", by: "Zetta Studio" },
-  { id: 2, title: "Matte Kitchen Set", by: "Nova Interior" },
-  { id: 3, title: "Glasmorph Office", by: "Aero Design" },
-];
-
-const latest = [
-  { id: 101, name: "Orbit Chair", price: 249.0 },
-  { id: 102, name: "Halo Lamp", price: 129.0 },
-  { id: 103, name: "Nebula Sofa", price: 899.0 },
-  { id: 104, name: "Prism Table", price: 459.0 },
-];
+const featured = products.slice(0, 6).map((p) => ({ id: p.id, title: p.name, by: "Studio" }));
+const latest = products.slice(0, 8).map((p) => ({ id: p.id, name: p.name, price: p.price }));
 
 export default function Index() {
   const { addToCart, toggleFavorite, isFavorite } = useShop();
