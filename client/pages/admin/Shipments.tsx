@@ -71,8 +71,7 @@ export default function AdminShipments() {
   const bulkUpdateStatus = async (status: string) => {
     if (selectedIds.length === 0) return alert('No items selected');
     try {
-      const { error } = await supabase.from('shipments').update({ status, updated_at: new Date().toISOString() }).in('id', selectedIds);
-      if (error) throw error;
+      await bulkActions('shipments', 'update_status', selectedIds, { status });
       setSelectedIds([]);
       await load();
     } catch (err) {
@@ -91,8 +90,7 @@ export default function AdminShipments() {
     if (selectedIds.length === 0) return alert('No items selected');
     if (!confirm(`Delete ${selectedIds.length} shipments?`)) return;
     try {
-      const { error } = await supabase.from('shipments').delete().in('id', selectedIds);
-      if (error) throw error;
+      await bulkActions('shipments', 'delete', selectedIds);
       setSelectedIds([]);
       await load();
     } catch (err) {
