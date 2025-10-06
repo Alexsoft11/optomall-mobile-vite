@@ -7,15 +7,21 @@ export function useProducts() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!supabase) return;
+    if (!supabase) return; // Only fetch if Supabase is initialized
     let mounted = true;
     setLoading(true);
+
     (async () => {
       try {
-        const { data, error } = await supabase.from("products").select("*").order("id", { ascending: true });
+        const { data, error } = await supabase
+          .from("products")
+          .select("*")
+          .order("id", { ascending: true });
+
         if (error) {
-          console.warn("Supabase products fetch error:", error.message);
+          console.warn("Supabase products fetch error:", error.message || error);
         }
+
         if (data && mounted) {
           setItems(data as any);
         }
@@ -25,6 +31,7 @@ export function useProducts() {
         if (mounted) setLoading(false);
       }
     })();
+
     return () => {
       mounted = false;
     };
