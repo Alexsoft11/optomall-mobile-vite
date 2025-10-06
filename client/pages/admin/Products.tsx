@@ -37,6 +37,23 @@ export default function AdminProducts() {
     load();
   }, []);
 
+  const exportCSV = () => {
+    const rows = items.map((p) => ({ id: p.id, name: p.name, description: p.description, price: p.price }));
+    downloadCSV(`products_${Date.now()}.csv`, rows, ["id", "name", "description", "price"]);
+  };
+
+  const printList = () => {
+    const html = `
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Description</th><th>Price</th></tr></thead>
+        <tbody>
+          ${items.map(p => `<tr><td>${p.id}</td><td>${p.name}</td><td>${(p.description||'').replace(/</g,'&lt;')}</td><td>${p.price}</td></tr>`).join('')}
+        </tbody>
+      </table>
+    `;
+    printHTML('Products', html);
+  };
+
   async function uploadFile(file: File) {
     if (!supabase) throw new Error("Supabase not configured");
     setUploading(true);
