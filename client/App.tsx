@@ -75,6 +75,46 @@ const App = () => (
               }
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+
+            {/* Admin routes */}
+            <Route
+              path="/admin"
+              element={
+                <Layout>
+                  {/* Admin landing will redirect or show a link to /admin */}
+                  <div style={{ padding: 20 }}>
+                    <h2 className="text-2xl font-bold">Admin</h2>
+                    <p>Open /admin/products for product management.</p>
+                  </div>
+                </Layout>
+              }
+            />
+            <Route
+              path="/admin/*"
+              element={
+                <Layout>
+                  {/* Admin subroutes render inside AdminLayout */}
+                  {/* Importing admin routes lazily is preferable but simple sync import used for now */}
+                  <div style={{ padding: 20 }}>
+                    {/* The Admin app is mounted on nested routes under /admin via React Router in the client/pages/admin directory */}
+                    {/* For direct admin pages use absolute paths like /admin/products */}
+                  </div>
+                </Layout>
+              }
+            />
+
+            <Route
+              path="/admin/products"
+              element={
+                <Layout>
+                  <div className="p-6">
+                    {/* Admin Products page */}
+                    {/**/}
+                  </div>
+                </Layout>
+              }
+            />
+
             <Route
               path="*"
               element={
