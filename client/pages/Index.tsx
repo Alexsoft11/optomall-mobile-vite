@@ -4,8 +4,12 @@ import { ArrowRight, Sparkles, Star, ShoppingCart, Heart } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
 import { products } from "@/data/products";
 
-const featured = products.slice(0, 6).map((p) => ({ id: p.id, title: p.name, by: "Studio" }));
-const latest = products.slice(0, 8).map((p) => ({ id: p.id, name: p.name, price: p.price }));
+const featured = products
+  .slice(0, 6)
+  .map((p) => ({ id: p.id, title: p.name, by: "Studio" }));
+const latest = products
+  .slice(0, 8)
+  .map((p) => ({ id: p.id, name: p.name, price: p.price }));
 
 export default function Index() {
   const { addToCart, toggleFavorite, isFavorite } = useShop();
