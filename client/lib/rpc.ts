@@ -1,62 +1,65 @@
 import { supabase } from "@/lib/supabase";
 
-const FUNCTIONS_URL = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL as string | undefined;
+const FUNCTIONS_URL = (import.meta.env.VITE_SUPABASE_FUNCTIONS_URL as string | undefined) || (import.meta.env.NEXT_PUBLIC_SUPABASE_URL ? `${import.meta.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1` : undefined);
+
+async function invokeOrFetch(functionName: string, body: any) {
+  // Try supabase.functions.invoke first
+  try {
+    const resp = await supabase.functions.invoke(functionName, { method: 'POST', body: JSON.stringify(body) });
+    if (resp?.error) throw resp.error;
+    return resp?.data ?? resp;
+  } catch (err) {
+    // Fallback to direct fetch to FUNCTIONS_URL
+    if (!FUNCTIONS_URL) throw err;
+    const token = (await supabase.auth.getSession()).data?.session?.access_token;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${FUNCTIONS_URL}/${functionName}`, { method: 'POST', headers, body: JSON.stringify(body) });
+    const json = await res.json().catch(() => null);
+    if (!res.ok) throw json || new Error('Function fetch failed');
+    return json;
+  }
+}
 
 export async function generateQr(orderId: number) {
   if (!supabase) throw new Error("Supabase not initialized");
-  const res = await supabase.functions.invoke('generate-qr', {
-    method: 'POST',
-    body: JSON.stringify({ order_id: orderId }),
-  });
-  if (res.error) throw res.error;
-  return res.data;
+  return invokeOrFetch('generate-qr', { order_id: orderId });
 }
 
 export async function tmapiFetch(provider: string, externalId: string) {
   if (!supabase) throw new Error("Supabase not initialized");
-  const res = await supabase.functions.invoke('tmapi-fetch', {
-    method: 'POST',
-    body: JSON.stringify({ provider, external_id: externalId }),
-  });
-  if (res.error) throw res.error;
-  return res.data;
+  return invokeOrFetch('tmapi-fetch', { provider, external_id: externalId });
 }
 
 export async function bulkActions(entity: string, action: string, ids: number[], payload?: any) {
   if (!supabase) throw new Error("Supabase not initialized");
-  const res = await supabase.functions.invoke('bulk-actions', {
-    method: 'POST',
-    body: JSON.stringify({ entity, action, ids, payload }),
-  });
-  if (res.error) throw res.error;
-  return res.data;
+  return invokeOrFetch('bulk-actions', { entity, action, ids, payload });
 }
 
 export async function signedUpload(file: File, bucket = 'product-images') {
-  // Prefer calling Supabase Edge Function via supabase.functions.invoke if client is available
+  // Try to use the Edge function; if not available, use other fallbacks
   try {
-    const fd = new FormData();
-    fd.append('file', file);
-    fd.append('bucket', bucket);
+    // If supabase.functions.invoke supports FormData, prefer it
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('bucket', bucket);
+      const resp = await supabase.functions.invoke('signed-upload', { method: 'POST', body: fd as any });
+      if (resp?.error) throw resp.error;
+      return resp?.data ?? resp;
+    } catch (e) {
+      // ignore and fall through to invokeOrFetch which uses JSON
+    }
 
-    // supabase.functions.invoke usually works in browser and will route to your deployed Edge function
-    const resp = await supabase.functions.invoke('signed-upload', {
-      method: 'POST',
-      body: fd as any,
-    });
-    if (resp?.error) throw resp.error;
-    return resp?.data || resp;
-  } catch (err) {
-    // If invoke is not available or fails, fallback to direct fetch to FUNCTIONS_URL if configured
-    const token = (await supabase.auth.getSession()).data?.session?.access_token;
+    // If we can't send FormData via invoke, use fetch to FUNCTIONS_URL
     if (FUNCTIONS_URL) {
-      const url = `${FUNCTIONS_URL}/signed-upload`;
+      const token = (await supabase.auth.getSession()).data?.session?.access_token;
       const fd2 = new FormData();
       fd2.append('file', file);
       fd2.append('bucket', bucket);
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      const fetchResp = await fetch(url, { method: 'POST', headers, body: fd2 });
+      const fetchResp = await fetch(`${FUNCTIONS_URL}/signed-upload`, { method: 'POST', headers, body: fd2 });
       const json = await fetchResp.json();
       if (!fetchResp.ok) throw json;
       return json;
@@ -68,5 +71,7 @@ export async function signedUpload(file: File, bucket = 'product-images') {
     if (error) throw error;
     const { publicURL } = supabase.storage.from(bucket).getPublicUrl(filePath);
     return { publicURL };
+  } catch (err) {
+    throw err;
   }
 }
