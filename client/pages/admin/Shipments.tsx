@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import BucketChecker from "@/components/admin/BucketChecker";
 
 type Shipment = {
   id: number;
