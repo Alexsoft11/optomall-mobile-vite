@@ -1,4 +1,3 @@
--- Supabase schema for products table
 -- Run this in the Supabase SQL editor to create the products table and seed sample data
 
 CREATE TABLE IF NOT EXISTS products (
@@ -29,6 +28,26 @@ CREATE TABLE IF NOT EXISTS sessions (
 
 -- Index to speed up session lookups
 CREATE INDEX IF NOT EXISTS idx_sessions_session_key ON sessions (session_key);
+
+-- Shipments table for admin management
+CREATE TABLE IF NOT EXISTS shipments (
+  id serial PRIMARY KEY,
+  order_id text NOT NULL,
+  status text NOT NULL DEFAULT 'pending',
+  tracking_number text,
+  warehouse text,
+  carrier text,
+  documents jsonb DEFAULT '[]',
+  photos jsonb DEFAULT '[]',
+  notes text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- Seed sample shipment
+INSERT INTO shipments (order_id, status, tracking_number, warehouse, carrier, documents, photos, notes) VALUES
+('ORD-1001', 'ready', 'TRK123456', 'Main Warehouse', 'DHL', '[]', '[]', 'Ready for pickup'),
+('ORD-1002', 'shipped', 'TRK123457', 'Main Warehouse', 'UPS', '[]', '[]', 'Left warehouse');
 
 -- Example upsert for sessions
 -- INSERT INTO sessions (session_key, cart, favorites) VALUES ('guest-123', '[]', '[]') ON CONFLICT (session_key) DO UPDATE SET cart = EXCLUDED.cart, favorites = EXCLUDED.favorites, updated_at = now();
