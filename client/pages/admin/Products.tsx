@@ -126,7 +126,13 @@ export default function AdminProducts() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Products</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">Products</h1>
+        <div className="flex items-center gap-2">
+          <button onClick={() => exportCSV()} className="px-3 py-1 bg-green-600 text-white rounded">Export CSV</button>
+          <button onClick={() => printList()} className="px-3 py-1 bg-slate-700 text-white rounded">Print</button>
+        </div>
+      </div>
 
       <BucketChecker bucket="product-images" label="Product Images (product-images)" />
 
