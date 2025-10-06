@@ -142,7 +142,6 @@ export default function AdminShipments() {
   }
 
   // Exports and printing
-  import { downloadCSV, printHTML } from "@/lib/export";
 
   const exportCSV = () => {
     const rows = items.map((s) => ({ id: s.id, order_id: s.order_id, status: s.status, tracking: s.tracking_number, warehouse: s.warehouse, carrier: s.carrier, notes: s.notes, created_at: s.created_at }));
