@@ -148,23 +148,19 @@ export default function AdminProducts() {
   }
 
   async function handleImageUpload(productId: number, file: File) {
-    if (!supabase) {
-      alert("Supabase is not configured");
-      return;
-    }
     try {
-      const url = await uploadFile(file);
-      if (!url) throw new Error("No URL returned");
-      // fetch existing images and append
+      const result = await signedUpload(file, 'product-images');
+      const url = result.publicURL || result.publicUrl || result.publicUrl || result.publicURL;
+      if (!url) throw new Error('No URL returned from upload');
       const prod = items.find((p) => p.id === productId);
       const newImages = Array.isArray(prod?.images) ? [...prod!.images!, url] : [url];
-      const { error } = await supabase.from("products").update({ images: newImages }).eq("id", productId);
+      const { error } = await supabase.from('products').update({ images: newImages }).eq('id', productId);
       if (error) throw error;
       await load();
-      alert("Image uploaded");
+      alert('Image uploaded');
     } catch (err: any) {
       console.error(err);
-      alert(err.message || "Upload failed. Make sure a public bucket named 'product-images' exists in Supabase Storage.");
+      alert(err.message || 'Upload failed. Make sure a public bucket named "product-images" exists in Supabase Storage or check function endpoint.');
     }
   }
 
