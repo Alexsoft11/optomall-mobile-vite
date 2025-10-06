@@ -105,10 +105,10 @@ export default function Layout({ children }: LayoutProps) {
       </header>
 
       {/* Content */}
-      <main className="flex-1 mx-auto w-full max-w-md pb-20">{children}</main>
+      <main className="flex-1 mx-auto w-full max-w-md" style={{ paddingBottom: `calc(env(safe-area-inset-bottom, 16px) + 96px)` }}>{children}</main>
 
       {/* Bottom Nav */}
-      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md">
+      <nav className="fixed left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md" style={{ bottom: `calc(env(safe-area-inset-bottom, 16px) + 8px)` }}>
         <div ref={navRef} className="relative">
           <div
             ref={indicatorRef}
