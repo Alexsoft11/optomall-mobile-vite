@@ -108,6 +108,9 @@ export default function AdminProducts() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">Products</h1>
+
+      <BucketChecker bucket="product-images" label="Product Images (product-images)" />
+
       <form onSubmit={handleAdd} className="mb-6 grid grid-cols-3 gap-2">
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="p-2 border rounded" />
         <input value={price} onChange={(e) => setPrice(Number(e.target.value))} placeholder="Price" className="p-2 border rounded" />
