@@ -37,21 +37,66 @@ export default function AdminProducts() {
     load();
   }, []);
 
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const STATUS_OPTIONS = ["active", "out_of_stock", "discontinued"];
+  const [bulkStatus, setBulkStatus] = useState(STATUS_OPTIONS[0]);
+
   const exportCSV = () => {
-    const rows = items.map((p) => ({ id: p.id, name: p.name, description: p.description, price: p.price }));
-    downloadCSV(`products_${Date.now()}.csv`, rows, ["id", "name", "description", "price"]);
+    const rows = items.map((p) => ({ id: p.id, name: p.name, description: p.description, price: p.price, status: (p as any).status }));
+    downloadCSV(`products_${Date.now()}.csv`, rows, ["id", "name", "description", "price", "status"]);
   };
 
   const printList = () => {
     const html = `
       <table>
-        <thead><tr><th>ID</th><th>Name</th><th>Description</th><th>Price</th></tr></thead>
+        <thead><tr><th>ID</th><th>Name</th><th>Description</th><th>Price</th><th>Status</th></tr></thead>
         <tbody>
-          ${items.map(p => `<tr><td>${p.id}</td><td>${p.name}</td><td>${(p.description||'').replace(/</g,'&lt;')}</td><td>${p.price}</td></tr>`).join('')}
+          ${items.map(p => `<tr><td>${p.id}</td><td>${p.name}</td><td>${(p.description||'').replace(/</g,'&lt;')}</td><td>${p.price}</td><td>${(p as any).status||''}</td></tr>`).join('')}
         </tbody>
       </table>
     `;
     printHTML('Products', html);
+  };
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  };
+  const toggleSelectAll = () => {
+    if (selectedIds.length === items.length) setSelectedIds([]);
+    else setSelectedIds(items.map((i) => i.id));
+  };
+
+  const bulkDeleteSelected = async () => {
+    if (selectedIds.length === 0) return alert('No items selected');
+    if (!confirm(`Delete ${selectedIds.length} products?`)) return;
+    try {
+      const { error } = await supabase.from('products').delete().in('id', selectedIds);
+      if (error) throw error;
+      setSelectedIds([]);
+      await load();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete selected');
+    }
+  };
+
+  const bulkExportSelected = () => {
+    if (selectedIds.length === 0) return alert('No items selected');
+    const rows = items.filter((p) => selectedIds.includes(p.id)).map((p) => ({ id: p.id, name: p.name, description: p.description, price: p.price, status: (p as any).status }));
+    downloadCSV(`products_selected_${Date.now()}.csv`, rows, ["id", "name", "description", "price", "status"]);
+  };
+
+  const bulkUpdateStatus = async () => {
+    if (selectedIds.length === 0) return alert('No items selected');
+    try {
+      const { error } = await supabase.from('products').update({ status: bulkStatus }).in('id', selectedIds);
+      if (error) throw error;
+      setSelectedIds([]);
+      await load();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update status');
+    }
   };
 
   async function uploadFile(file: File) {
