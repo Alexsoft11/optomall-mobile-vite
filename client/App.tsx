@@ -20,7 +20,8 @@ import { ShopProvider } from "./context/ShopContext";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminProducts from "./pages/admin/Products";
 import AdminDashboard from "./pages/admin/Dashboard";
-import { Users, Categories, Orders, Payments, Shipments, Sellers, Integrations } from "./pages/admin/Placeholders";
+import { Users, Categories, Orders, Payments, Sellers, Integrations } from "./pages/admin/Placeholders";
+import AdminShipments from "./pages/admin/Shipments";
 
 const queryClient = new QueryClient();
 
