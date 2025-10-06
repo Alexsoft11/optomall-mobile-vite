@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import BucketChecker from "@/components/admin/BucketChecker";
 import { downloadCSV, printHTML } from "@/lib/export";
@@ -24,6 +25,8 @@ export default function AdminShipments() {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [bulkStatus, setBulkStatus] = useState<string>(STATUS_OPTIONS[0]);
 
   async function load() {
     if (!supabase) return;
