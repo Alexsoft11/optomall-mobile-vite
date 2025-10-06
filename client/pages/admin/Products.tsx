@@ -9,6 +9,8 @@ type Product = {
   images?: string[];
 };
 
+import BucketChecker from "@/components/admin/BucketChecker";
+
 export default function AdminProducts() {
   const [items, setItems] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
