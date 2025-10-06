@@ -113,6 +113,8 @@ export default function AdminShipments() {
         </div>
       </div>
 
+      <BucketChecker bucket="shipment-docs" label="Shipment documents & photos (shipment-docs)" />
+
       {loading ? (
         <div>Loading...</div>
       ) : (
