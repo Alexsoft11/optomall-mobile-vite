@@ -70,8 +70,7 @@ export default function AdminProducts() {
     if (selectedIds.length === 0) return alert('No items selected');
     if (!confirm(`Delete ${selectedIds.length} products?`)) return;
     try {
-      const { error } = await supabase.from('products').delete().in('id', selectedIds);
-      if (error) throw error;
+      await bulkActions('products', 'delete', selectedIds);
       setSelectedIds([]);
       await load();
     } catch (err) {
@@ -89,8 +88,7 @@ export default function AdminProducts() {
   const bulkUpdateStatus = async () => {
     if (selectedIds.length === 0) return alert('No items selected');
     try {
-      const { error } = await supabase.from('products').update({ status: bulkStatus }).in('id', selectedIds);
-      if (error) throw error;
+      await bulkActions('products', 'update_status', selectedIds, { status: bulkStatus });
       setSelectedIds([]);
       await load();
     } catch (err) {
