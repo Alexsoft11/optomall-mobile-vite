@@ -7,15 +7,7 @@ import {
   Heart,
 } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
-
-const products = Array.from({ length: 12 }).map((_, i) => ({
-  id: i + 1,
-  name:
-    ["Aero Chair", "Flux Lamp", "Mono Sofa", "Prism Table"][i % 4] +
-    " " +
-    (i + 1),
-  price: 99 + i * 7,
-}));
+import { products } from "@/data/products";
 
 export default function Marketplace() {
   const { addToCart, toggleFavorite, isFavorite } = useShop();
