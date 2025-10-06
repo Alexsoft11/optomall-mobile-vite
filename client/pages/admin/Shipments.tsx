@@ -110,6 +110,8 @@ export default function AdminShipments() {
             ))}
           </select>
           <button onClick={() => load()} className="px-3 py-1 bg-blue-600 text-white rounded">Refresh</button>
+          <button onClick={() => exportCSV()} className="px-3 py-1 bg-green-600 text-white rounded">Export CSV</button>
+          <button onClick={() => printTable()} className="px-3 py-1 bg-slate-700 text-white rounded">Print</button>
         </div>
       </div>
 
