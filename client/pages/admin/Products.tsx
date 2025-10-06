@@ -12,6 +12,7 @@ type Product = {
 };
 
 import BucketChecker from "@/components/admin/BucketChecker";
+import { bulkActions, signedUpload } from "@/lib/rpc";
 
 export default function AdminProducts() {
   const [items, setItems] = useState<Product[]>([]);
