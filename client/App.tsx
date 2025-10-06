@@ -16,6 +16,12 @@ import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
 import { ShopProvider } from "./context/ShopContext";
 
+// Admin pages
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminProducts from "./pages/admin/Products";
+import AdminDashboard from "./pages/admin/Dashboard";
+import { Users, Categories, Orders, Payments, Shipments, Sellers, Integrations } from "./pages/admin/Placeholders";
+
 const queryClient = new QueryClient();
 
 const App = () => (
