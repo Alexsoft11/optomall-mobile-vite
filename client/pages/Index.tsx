@@ -3,16 +3,14 @@ import { Link as RouterLink } from "react-router-dom";
 import { ArrowRight, Sparkles, Star, ShoppingCart, Heart } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
 import { products } from "@/data/products";
-
-const featured = products
-  .slice(0, 6)
-  .map((p) => ({ id: p.id, title: p.name, by: "Studio" }));
-const latest = products
-  .slice(0, 8)
-  .map((p) => ({ id: p.id, name: p.name, price: p.price }));
+import { useProducts } from "@/hooks/useProducts";
 
 export default function Index() {
   const { addToCart, toggleFavorite, isFavorite } = useShop();
+  const { items: productsList } = useProducts();
+
+  const featured = productsList.slice(0, 6).map((p) => ({ id: p.id, title: p.name, by: "Studio" }));
+  const latest = productsList.slice(0, 8).map((p) => ({ id: p.id, name: p.name, price: p.price }));
 
   return (
     <div className="px-4 pb-6 pt-4 space-y-6">
