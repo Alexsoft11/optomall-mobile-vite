@@ -110,16 +110,23 @@ const App = () => (
             />
 
             <Route
-              path="/admin/products"
+              path="/admin"
               element={
                 <Layout>
-                  <div className="p-6">
-                    {/* Admin Products page */}
-                    {/**/}
-                  </div>
+                  <AdminLayout />
                 </Layout>
               }
-            />
+            >
+              <Route index element={<AdminDashboard />} />
+              <Route path="products" element={<AdminProducts />} />
+              <Route path="users" element={<Users />} />
+              <Route path="categories" element={<Categories />} />
+              <Route path="orders" element={<Orders />} />
+              <Route path="payments" element={<Payments />} />
+              <Route path="shipments" element={<Shipments />} />
+              <Route path="sellers" element={<Sellers />} />
+              <Route path="integrations" element={<Integrations />} />
+            </Route>
 
             <Route
               path="*"
