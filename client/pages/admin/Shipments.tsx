@@ -268,6 +268,23 @@ export default function AdminShipments() {
                     <div>
                       <button onClick={() => { if (confirm('Delete shipment?')) { supabase?.from('shipments').delete().eq('id', s.id).then(()=>load()); } }} className="px-2 py-1 bg-red-600 text-white rounded text-sm">Delete</button>
                     </div>
+                    <div className="mt-2">
+                      <button onClick={async () => {
+                        try {
+                          const res = await generateQr(Number(s.order_id));
+                          const url = res?.qr_code_url || res?.qr || res?.qr_code_url || res?.qrCodeUrl || null;
+                          if (url) {
+                            window.open(url, '_blank');
+                          } else {
+                            alert('QR generated');
+                          }
+                          await load();
+                        } catch (err: any) {
+                          console.error(err);
+                          alert(err?.message || String(err));
+                        }
+                      }} className="px-2 py-1 bg-blue-600 text-white rounded text-sm">Generate QR</button>
+                    </div>
                   </td>
                 </tr>
               ))}
