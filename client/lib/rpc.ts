@@ -27,9 +27,17 @@ export async function generateQr(orderId: number) {
   // Dev mock: if running in dev and FUNCTIONS_URL is not configured, return a simple SVG data URL as QR placeholder
   const isDev = Boolean(import.meta.env.DEV);
   if (isDev && !FUNCTIONS_URL) {
-    const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600'><rect width='100%' height='100%' fill='#fff'/><text x='50%' y='50%' font-size='28' dominant-baseline='middle' text-anchor='middle' fill='#000'>QR:${String(orderId)}</text></svg>`;
-    const dataUrl = `data:image/svg+xml;base64,${btoa(svg)}`;
-    return { qr_code_url: dataUrl, qr: dataUrl };
+    // generate QR client-side using a small CDN ESM build of qrcode
+    try {
+      const QR = await import('https://cdn.skypack.dev/qrcode');
+      const dataUrl = await QR.toDataURL(JSON.stringify({ order_id: orderId }), { errorCorrectionLevel: 'M', width: 600 });
+      return { qr_code_url: dataUrl, qr: dataUrl };
+    } catch (e) {
+      // fallback to simple SVG if CDN import fails
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600'><rect width='100%' height='100%' fill='#fff'/><text x='50%' y='50%' font-size='28' dominant-baseline='middle' text-anchor='middle' fill='#000'>QR:${String(orderId)}</text></svg>`;
+      const dataUrl = `data:image/svg+xml;base64,${btoa(svg)}`;
+      return { qr_code_url: dataUrl, qr: dataUrl };
+    }
   }
 
   return invokeOrFetch('generate-qr', { order_id: orderId });
