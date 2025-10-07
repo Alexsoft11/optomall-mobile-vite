@@ -23,6 +23,15 @@ async function invokeOrFetch(functionName: string, body: any) {
 
 export async function generateQr(orderId: number) {
   if (!supabase) throw new Error("Supabase not initialized");
+
+  // Dev mock: if running in dev and FUNCTIONS_URL is not configured, return a simple SVG data URL as QR placeholder
+  const isDev = Boolean(import.meta.env.DEV);
+  if (isDev && !FUNCTIONS_URL) {
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600'><rect width='100%' height='100%' fill='#fff'/><text x='50%' y='50%' font-size='28' dominant-baseline='middle' text-anchor='middle' fill='#000'>QR:${String(orderId)}</text></svg>`;
+    const dataUrl = `data:image/svg+xml;base64,${btoa(svg)}`;
+    return { qr_code_url: dataUrl, qr: dataUrl };
+  }
+
   return invokeOrFetch('generate-qr', { order_id: orderId });
 }
 
@@ -37,6 +46,13 @@ export async function bulkActions(entity: string, action: string, ids: number[],
 }
 
 export async function signedUpload(file: File, bucket = 'product-images') {
+  // Dev mock: if running locally and no FUNCTIONS_URL, return placeholder image URL so UI continues to work
+  const isDev = Boolean(import.meta.env.DEV);
+  if (isDev && !FUNCTIONS_URL) {
+    // Use public placeholder in /public/placeholder.svg
+    return { publicURL: '/placeholder.svg', path: `mock/${Date.now()}_${file.name}` };
+  }
+
   // Try to use the Edge function; if not available, use other fallbacks
   try {
     // If supabase.functions.invoke supports FormData, prefer it
