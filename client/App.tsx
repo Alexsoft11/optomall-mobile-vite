@@ -15,6 +15,7 @@ import Favorites from "./pages/Favorites";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
 import { ShopProvider } from "./context/ShopContext";
+import { CurrencyProvider } from "./context/CurrencyContext";
 
 // Admin pages
 import AdminLayout from "./pages/admin/AdminLayout";
