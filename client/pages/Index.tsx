@@ -147,7 +147,7 @@ export default function Index() {
                     </span>
                   </div>
                   <div className="text-sm font-semibold text-primary mb-2">
-                    ${p.price.toFixed(2)}
+                    {convertPrice(p.price)}
                   </div>
                   <button
                     onClick={(e) => {
