@@ -86,7 +86,7 @@ export default function Layout({ children }: LayoutProps) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-foreground/60" />
               <input
                 className="w-full h-10 rounded-2xl bg-white/60 dark:bg-white/10 border border-white/40 dark:border-white/10 pl-9 pr-3 text-sm placeholder:text-foreground/50 outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_0_0_1px_rgba(255,255,255,0.2)]"
-                placeholder="Search furniture, decor, designers"
+                placeholder="Search products from China"
               />
             </div>
           </div>
