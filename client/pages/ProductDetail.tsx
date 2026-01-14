@@ -165,7 +165,7 @@ export default function ProductDetail() {
           <div>
             <div className="text-xs text-foreground/70 mb-1">Price</div>
             <div className="text-3xl font-bold text-primary">
-              ${product.price.toFixed(2)}
+              {convertPrice(product.price)}
             </div>
             <div className="text-xs text-foreground/70 mt-1">
               In stock: <span className="text-green-500 font-medium">250+ units</span>
