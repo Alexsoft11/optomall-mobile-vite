@@ -142,8 +142,8 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
 };
 
 /**
- * Get product details from Alibaba
- * 
+ * Get product details from 1688
+ *
  * Usage: GET /api/alibaba/product/:productId
  */
 export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
@@ -154,43 +154,52 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: "productId is required" });
     }
 
-    // TODO: Implement actual Alibaba API call to get product details
-    const mockProduct: AlibabaProduct & { description: string; specifications: Record<string, string> } = {
-      id: productId,
-      name: "Premium Wireless Earbuds",
-      price: 15.99,
-      originalPrice: 24.99,
-      unit: "piece",
-      images: [
-        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800",
-        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800",
-      ],
+    // Call tmapi.top API to get item details
+    // Reference: https://tmapi.top/docs/ali/item-detail/get-item-detail-by-id
+    const response = await tmapiRequest("ali/item-detail/get-item-detail-by-id", {
+      itemId: productId,
+    });
+
+    const item = response.data;
+
+    if (!item) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    // Transform tmapi.top response to our format
+    const product = {
+      id: item.itemId,
+      name: item.title,
+      price: item.minPrice || item.price,
+      originalPrice: item.maxPrice || item.price * 1.2,
+      unit: item.unit || "piece",
+      images: [item.image, ...(item.imageList || [])],
       seller: {
-        id: "seller_1",
-        name: "Electronics Store",
-        rating: 4.8,
+        id: item.supplierId,
+        name: item.supplierName,
+        rating: item.rating || 4.5,
       },
-      minOrder: 1,
+      minOrder: item.minOrder || 1,
       logistics: {
         deliveryDays: 15,
         shippingCost: 5,
       },
-      description:
-        "High-quality wireless earbuds with Bluetooth 5.0, noise cancellation, and 24-hour battery life.",
+      description: item.description || item.title,
       specifications: {
-        connectivity: "Bluetooth 5.0",
-        batteryLife: "8 hours (24 hours with case)",
-        waterResistance: "IPX5",
-        material: "Plastic and silicone",
+        category: item.category || "N/A",
+        weight: item.weight || "N/A",
+        size: item.size || "N/A",
+        material: item.material || "N/A",
+        warranty: item.warranty || "No warranty",
       },
     };
 
     res.json({
       success: true,
-      data: mockProduct,
+      data: product,
     });
   } catch (error) {
-    console.error("Alibaba product detail error:", error);
+    console.error("1688 product detail error:", error);
     res.status(500).json({
       error: "Failed to get product details",
       details: error instanceof Error ? error.message : "Unknown error",
