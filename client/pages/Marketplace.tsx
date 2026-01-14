@@ -5,6 +5,7 @@ import {
   X,
 } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
+import { useCurrency } from "@/context/CurrencyContext";
 import { products } from "@/data/products";
 import { useProducts } from "@/hooks/useProducts";
 import { useState, useMemo } from "react";
