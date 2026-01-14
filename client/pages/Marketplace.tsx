@@ -11,6 +11,7 @@ import { useState, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 
 export default function Marketplace() {
+  const navigate = useNavigate();
   const { addToCart, toggleFavorite, isFavorite } = useShop();
   const { items } = useProducts();
   const [searchParams, setSearchParams] = useSearchParams();
