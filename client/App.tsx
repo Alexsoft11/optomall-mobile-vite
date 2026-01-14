@@ -32,7 +32,8 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <ShopProvider>
+        <CurrencyProvider>
+          <ShopProvider>
           <Routes>
             <Route
               path="/"
@@ -139,7 +140,8 @@ const App = () => (
               }
             />
           </Routes>
-        </ShopProvider>
+          </ShopProvider>
+        </CurrencyProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
