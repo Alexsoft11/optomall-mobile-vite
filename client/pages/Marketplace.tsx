@@ -205,7 +205,7 @@ export default function Marketplace() {
                     />
                   </button>
                   <div className="absolute top-2 left-2 px-2 py-1 rounded-md bg-primary text-primary-foreground text-xs font-medium">
-                    ${p.price.toFixed(2)}
+                    {convertPrice(p.price)}
                   </div>
                 </div>
                 <div className="p-3">
