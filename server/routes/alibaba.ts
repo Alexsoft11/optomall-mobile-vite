@@ -208,8 +208,8 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
 };
 
 /**
- * Estimate shipping for Alibaba products
- * 
+ * Estimate shipping for 1688 products
+ *
  * Usage: POST /api/alibaba/shipping-estimate
  * Body: {
  *   productId: "ali_1",
@@ -227,30 +227,78 @@ export const estimateShipping: RequestHandler = async (req, res) => {
       });
     }
 
-    // Mock shipping estimation
-    const baseCost = 50;
-    const perUnitCost = 0.5;
-    const totalCost = baseCost + quantity * perUnitCost;
-    const daysToDeliver =
-      destination === "US" ? 20 : destination === "EU" ? 25 : 30;
+    try {
+      // Try to get shipping info from tmapi.top
+      const response = await tmapiRequest(
+        "ali/item-detail/get-item-detail-by-id",
+        { itemId: productId }
+      );
 
-    res.json({
-      success: true,
-      data: {
-        productId,
-        quantity,
-        destination,
-        shippingCost: totalCost,
-        currency: "USD",
-        estimatedDelivery: daysToDeliver,
-        details: {
-          handlingFee: baseCost,
-          perUnitCost: perUnitCost,
-          totalWeight: `${quantity * 0.05}kg`,
-          shippingMethod: "DHL/FedEx",
+      const item = response.data;
+      const baseWeight = parseFloat(item.weight || "0.5");
+      const totalWeight = baseWeight * quantity;
+
+      // Estimate based on destination and weight
+      let shippingCost = 0;
+      let daysToDeliver = 15;
+
+      if (destination === "US") {
+        shippingCost = 50 + totalWeight * 2;
+        daysToDeliver = 20;
+      } else if (destination === "EU") {
+        shippingCost = 60 + totalWeight * 2.5;
+        daysToDeliver = 25;
+      } else if (destination === "UZ") {
+        shippingCost = 40 + totalWeight * 1.5;
+        daysToDeliver = 18;
+      } else {
+        // Default for other destinations
+        shippingCost = 70 + totalWeight * 3;
+        daysToDeliver = 30;
+      }
+
+      res.json({
+        success: true,
+        data: {
+          productId,
+          quantity,
+          destination,
+          shippingCost: parseFloat(shippingCost.toFixed(2)),
+          currency: "USD",
+          estimatedDelivery: daysToDeliver,
+          details: {
+            baseCost: 50,
+            perKgCost: destination === "US" ? 2 : destination === "EU" ? 2.5 : 1.5,
+            totalWeight: `${totalWeight.toFixed(2)}kg`,
+            shippingMethod: "DHL/FedEx/EMS",
+          },
         },
-      },
-    });
+      });
+    } catch {
+      // If API call fails, provide estimation based on defaults
+      const baseWeight = 0.5;
+      const totalWeight = baseWeight * quantity;
+      let shippingCost = 50 + totalWeight * 2;
+      let daysToDeliver = 20;
+
+      res.json({
+        success: true,
+        data: {
+          productId,
+          quantity,
+          destination,
+          shippingCost: parseFloat(shippingCost.toFixed(2)),
+          currency: "USD",
+          estimatedDelivery: daysToDeliver,
+          details: {
+            baseCost: 50,
+            perKgCost: 2,
+            totalWeight: `${totalWeight.toFixed(2)}kg`,
+            shippingMethod: "Standard International Shipping",
+          },
+        },
+      });
+    }
   } catch (error) {
     console.error("Shipping estimation error:", error);
     res.status(500).json({
