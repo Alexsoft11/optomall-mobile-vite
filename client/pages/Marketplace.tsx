@@ -173,54 +173,66 @@ export default function Marketplace() {
       ) : (
         <div className="grid grid-cols-2 gap-3">
           {productsList.map((p) => (
-            <GlassCard key={p.id} className="overflow-hidden hover:ring-2 hover:ring-primary/40 transition">
-              <div className="h-32 bg-gradient-to-b from-muted to-card relative overflow-hidden">
-                {p.images && p.images[0] && (
-                  <img
-                    src={p.images[0]}
-                    alt={p.name}
-                    className="w-full h-full object-cover"
-                  />
-                )}
-                <button
-                  onClick={() => toggleFavorite(p.id)}
-                  className="absolute top-2 right-2 size-8 rounded-lg grid place-items-center bg-white/80 dark:bg-white/20 border border-white/20 hover:bg-white dark:hover:bg-white/30"
-                >
-                  <Heart
-                    className={
-                      isFavorite(p.id)
-                        ? "size-4 text-destructive fill-current"
-                        : "size-4 text-foreground/60"
-                    }
-                  />
-                </button>
-                <div className="absolute top-2 left-2 px-2 py-1 rounded-md bg-primary text-primary-foreground text-xs font-medium">
-                  ${p.price.toFixed(2)}
-                </div>
-              </div>
-              <div className="p-3">
-                <div className="text-xs text-foreground/60 mb-1 capitalize">
-                  {p.category}
-                </div>
-                <div className="text-sm font-medium truncate line-clamp-2 mb-2">
-                  {p.name}
-                </div>
-                {p.rating && (
-                  <div className="flex items-center gap-2 mb-2 text-xs">
-                    <div className="flex text-amber-500">
-                      {"★".repeat(Math.floor(p.rating))}
-                    </div>
-                    <span className="text-foreground/60">({p.reviews})</span>
+            <div
+              key={p.id}
+              onClick={() => navigate(`/product/${p.id}`)}
+              className="cursor-pointer"
+            >
+              <GlassCard className="overflow-hidden hover:ring-2 hover:ring-primary/40 transition h-full">
+                <div className="h-32 bg-gradient-to-b from-muted to-card relative overflow-hidden">
+                  {p.images && p.images[0] && (
+                    <img
+                      src={p.images[0]}
+                      alt={p.name}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite(p.id);
+                    }}
+                    className="absolute top-2 right-2 size-8 rounded-lg grid place-items-center bg-white/80 dark:bg-white/20 border border-white/20 hover:bg-white dark:hover:bg-white/30"
+                  >
+                    <Heart
+                      className={
+                        isFavorite(p.id)
+                          ? "size-4 text-destructive fill-current"
+                          : "size-4 text-foreground/60"
+                      }
+                    />
+                  </button>
+                  <div className="absolute top-2 left-2 px-2 py-1 rounded-md bg-primary text-primary-foreground text-xs font-medium">
+                    ${p.price.toFixed(2)}
                   </div>
-                )}
-                <button
-                  onClick={() => addToCart(p)}
-                  className="w-full h-8 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 transition flex items-center justify-center gap-1"
-                >
-                  <ShoppingCart className="size-3" /> Add to cart
-                </button>
-              </div>
-            </GlassCard>
+                </div>
+                <div className="p-3">
+                  <div className="text-xs text-foreground/60 mb-1 capitalize">
+                    {p.category}
+                  </div>
+                  <div className="text-sm font-medium truncate line-clamp-2 mb-2">
+                    {p.name}
+                  </div>
+                  {p.rating && (
+                    <div className="flex items-center gap-2 mb-2 text-xs">
+                      <div className="flex text-amber-500">
+                        {"★".repeat(Math.floor(p.rating))}
+                      </div>
+                      <span className="text-foreground/60">({p.reviews})</span>
+                    </div>
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addToCart(p);
+                    }}
+                    className="w-full h-8 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 transition flex items-center justify-center gap-1"
+                  >
+                    <ShoppingCart className="size-3" /> Add to cart
+                  </button>
+                </div>
+              </GlassCard>
+            </div>
           ))}
         </div>
       )}
