@@ -67,19 +67,15 @@ export function useAlibaba() {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   const getProductDetail = useCallback(
-    async (
-      productId: string
-    ): Promise<AlibabaProduct | null> => {
+    async (productId: string): Promise<AlibabaProduct | null> => {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(
-          `/api/alibaba/product/${productId}`
-        );
+        const response = await fetch(`/api/alibaba/product/${productId}`);
 
         if (!response.ok) {
           throw new Error("Failed to fetch product details");
@@ -96,14 +92,14 @@ export function useAlibaba() {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   const estimateShipping = useCallback(
     async (
       productId: string,
       quantity: number,
-      destination: string
+      destination: string,
     ): Promise<ShippingEstimate | null> => {
       setLoading(true);
       setError(null);
@@ -133,7 +129,7 @@ export function useAlibaba() {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   return {

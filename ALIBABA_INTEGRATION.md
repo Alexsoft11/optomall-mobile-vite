@@ -5,6 +5,7 @@ This project integrates with **1688/Alibaba** through **tmapi.top**, a simplifie
 ## Overview
 
 The integration consists of:
+
 1. **Server routes** (`server/routes/alibaba.ts`) - Backend API endpoints powered by tmapi.top
 2. **React hook** (`client/hooks/useAlibaba.ts`) - Frontend hook for API calls
 3. **Type-safe interfaces** - For consistent data handling
@@ -71,6 +72,7 @@ interface AlibabaProduct {
 **Endpoint:** `POST /api/alibaba/search`
 
 **Request:**
+
 ```json
 {
   "keyword": "wireless earbuds",
@@ -81,6 +83,7 @@ interface AlibabaProduct {
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -88,13 +91,10 @@ interface AlibabaProduct {
     {
       "id": "627234567",
       "name": "Premium Wireless Earbuds with Noise Cancellation",
-      "price": 8.50,
+      "price": 8.5,
       "originalPrice": 12.99,
       "unit": "piece",
-      "images": [
-        "https://img.alicdn.com/...",
-        "https://img.alicdn.com/..."
-      ],
+      "images": ["https://img.alicdn.com/...", "https://img.alicdn.com/..."],
       "seller": {
         "id": "b2b1234567",
         "name": "Electronics Supplier Ltd.",
@@ -118,18 +118,20 @@ interface AlibabaProduct {
 **Endpoint:** `GET /api/alibaba/product/:productId`
 
 **Example:**
+
 ```bash
 GET /api/alibaba/product/627234567
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
   "data": {
     "id": "627234567",
     "name": "Premium Wireless Earbuds with Noise Cancellation",
-    "price": 8.50,
+    "price": 8.5,
     "originalPrice": 12.99,
     "unit": "piece",
     "images": [
@@ -159,6 +161,7 @@ GET /api/alibaba/product/627234567
 **Endpoint:** `POST /api/alibaba/shipping-estimate`
 
 **Request:**
+
 ```json
 {
   "productId": "627234567",
@@ -168,6 +171,7 @@ GET /api/alibaba/product/627234567
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -175,7 +179,7 @@ GET /api/alibaba/product/627234567
     "productId": "627234567",
     "quantity": 100,
     "destination": "US",
-    "shippingCost": 250.50,
+    "shippingCost": 250.5,
     "currency": "USD",
     "estimatedDelivery": 20,
     "details": {
@@ -223,11 +227,12 @@ function MyComponent() {
 ✅ **Get Details** - Fetch complete product information  
 ✅ **Estimate Shipping** - Calculate shipping costs and delivery time  
 ✅ **Multi-currency** - Integrated with currency converter  
-✅ **Type-safe** - Full TypeScript support  
+✅ **Type-safe** - Full TypeScript support
 
 ## Best Practices
 
 ### 1. API Token Security
+
 ```bash
 # NEVER commit your TMAPI_TOKEN to git
 echo "TMAPI_TOKEN=your_token" >> .env
@@ -235,25 +240,31 @@ echo "TMAPI_TOKEN=your_token" >> .env
 ```
 
 ### 2. Error Handling
+
 The implementation includes fallback mechanisms:
+
 - If the API call fails, shipping estimates use default calculations
 - Product searches gracefully handle API errors
 
 ### 3. Rate Limiting
+
 tmapi.top has built-in rate limiting. For production:
+
 ```typescript
-import rateLimit from 'express-rate-limit';
+import rateLimit from "express-rate-limit";
 
 const limiter = rateLimit({
-  windowMs: 60 * 1000,      // 1 minute
-  max: 100                   // 100 requests per minute
+  windowMs: 60 * 1000, // 1 minute
+  max: 100, // 100 requests per minute
 });
 
-app.post('/api/alibaba/search', limiter, searchAlibabaProducts);
+app.post("/api/alibaba/search", limiter, searchAlibabaProducts);
 ```
 
 ### 4. Caching
+
 Cache popular searches to reduce API calls:
+
 ```typescript
 const searchCache = new Map();
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour
@@ -271,39 +282,49 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
 ```
 
 ### 5. Data Validation
+
 Always validate incoming data:
+
 ```typescript
 if (!keyword || keyword.length < 2) {
-  return res.status(400).json({ error: "Keyword must be at least 2 characters" });
+  return res
+    .status(400)
+    .json({ error: "Keyword must be at least 2 characters" });
 }
 ```
 
 ## Troubleshooting
 
 ### "TMAPI_TOKEN is not set"
+
 **Solution:** Make sure your `.env` file contains:
+
 ```bash
 TMAPI_TOKEN=your_actual_token_from_tmapi.top
 ```
 
 ### No Search Results
+
 1. Check that the keyword is correct
 2. Try searching on [tmapi.top](https://tmapi.top) directly with the same keyword
 3. Verify your API token is still valid
 4. Check the server logs for detailed error messages
 
 ### Slow API Responses
+
 - tmapi.top may take 2-3 seconds for complex searches
 - Implement client-side loading indicators
 - Use caching for frequent searches
 - Consider pagination to limit results
 
 ### Product Images Not Loading
+
 - Use image URLs directly from tmapi.top (they're already optimized)
 - Implement lazy loading for better performance
 - Add fallback placeholder images
 
 ### Shipping Cost Estimation Issues
+
 - Verify the productId is correct
 - Check the destination country code format (US, EU, UZ, etc.)
 - Quantity must be a positive number
@@ -311,17 +332,19 @@ TMAPI_TOKEN=your_actual_token_from_tmapi.top
 ## Advanced Features
 
 ### Bulk Product Sync
+
 ```typescript
 // Sync multiple products at once
 async function bulkSyncProducts(productIds: string[]) {
   const results = await Promise.all(
-    productIds.map(id => getAlibabaProductDetail(id))
+    productIds.map((id) => getAlibabaProductDetail(id)),
   );
   return results;
 }
 ```
 
 ### Search with Multiple Filters
+
 ```typescript
 const searchParams = {
   keyword: "electronics",
@@ -329,7 +352,7 @@ const searchParams = {
   pageSize: 50,
   sortBy: "price_asc",
   minPrice: 5,
-  maxPrice: 100
+  maxPrice: 100,
 };
 ```
 
@@ -351,6 +374,7 @@ const searchParams = {
 ## Support
 
 For integration issues:
+
 1. Verify TMAPI_TOKEN is set and valid
 2. Check tmapi.top API status page
 3. Review server logs: `npm run dev`

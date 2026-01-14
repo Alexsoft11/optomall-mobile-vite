@@ -15,10 +15,13 @@ const TMAPI_BASE_URL = "https://tmapi.top/api";
 const TMAPI_TOKEN = process.env.TMAPI_TOKEN || "";
 
 // Helper function to make tmapi.top API requests
-async function tmapiRequest(endpoint: string, params: Record<string, any> = {}) {
+async function tmapiRequest(
+  endpoint: string,
+  params: Record<string, any> = {},
+) {
   if (!TMAPI_TOKEN) {
     throw new Error(
-      "TMAPI_TOKEN is not set. Please configure it in environment variables."
+      "TMAPI_TOKEN is not set. Please configure it in environment variables.",
     );
   }
 
@@ -81,8 +84,14 @@ interface SearchParams {
  */
 export const searchAlibabaProducts: RequestHandler = async (req, res) => {
   try {
-    const { keyword, pageNo = 1, pageSize = 20, sortBy, minPrice, maxPrice } =
-      req.body as SearchParams;
+    const {
+      keyword,
+      pageNo = 1,
+      pageSize = 20,
+      sortBy,
+      minPrice,
+      maxPrice,
+    } = req.body as SearchParams;
 
     if (!keyword) {
       return res.status(400).json({ error: "keyword is required" });
@@ -98,7 +107,8 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
     // Add filters if provided
     if (sortBy) {
       // sortType: 0 = relevance, 1 = price asc, 2 = price desc
-      params.sortType = sortBy === "price_asc" ? 1 : sortBy === "price_desc" ? 2 : 0;
+      params.sortType =
+        sortBy === "price_asc" ? 1 : sortBy === "price_desc" ? 2 : 0;
     }
 
     const response = await tmapiRequest("ali/search/search-items", params);
@@ -122,7 +132,7 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
           deliveryDays: 15,
           shippingCost: 5,
         },
-      })
+      }),
     );
 
     res.json({
@@ -156,9 +166,12 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
 
     // Call tmapi.top API to get item details
     // Reference: https://tmapi.top/docs/ali/item-detail/get-item-detail-by-id
-    const response = await tmapiRequest("ali/item-detail/get-item-detail-by-id", {
-      itemId: productId,
-    });
+    const response = await tmapiRequest(
+      "ali/item-detail/get-item-detail-by-id",
+      {
+        itemId: productId,
+      },
+    );
 
     const item = response.data;
 
@@ -231,7 +244,7 @@ export const estimateShipping: RequestHandler = async (req, res) => {
       // Try to get shipping info from tmapi.top
       const response = await tmapiRequest(
         "ali/item-detail/get-item-detail-by-id",
-        { itemId: productId }
+        { itemId: productId },
       );
 
       const item = response.data;
@@ -268,7 +281,8 @@ export const estimateShipping: RequestHandler = async (req, res) => {
           estimatedDelivery: daysToDeliver,
           details: {
             baseCost: 50,
-            perKgCost: destination === "US" ? 2 : destination === "EU" ? 2.5 : 1.5,
+            perKgCost:
+              destination === "US" ? 2 : destination === "EU" ? 2.5 : 1.5,
             totalWeight: `${totalWeight.toFixed(2)}kg`,
             shippingMethod: "DHL/FedEx/EMS",
           },

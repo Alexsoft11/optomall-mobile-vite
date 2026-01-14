@@ -32,11 +32,13 @@ TMAPI_TOKEN=your_api_token_here
 ### Step 4: Test the Integration
 
 1. Start the dev server:
+
 ```bash
 npm run dev
 ```
 
 2. Test the search endpoint:
+
 ```bash
 curl -X POST http://localhost:8080/api/alibaba/search \
   -H "Content-Type: application/json" \
@@ -75,6 +77,7 @@ function MyComponent() {
 ## API Endpoints Available
 
 ### 1. Search Products
+
 ```bash
 POST /api/alibaba/search
 Content-Type: application/json
@@ -88,11 +91,13 @@ Content-Type: application/json
 ```
 
 ### 2. Get Product Details
+
 ```bash
 GET /api/alibaba/product/{productId}
 ```
 
 ### 3. Estimate Shipping
+
 ```bash
 POST /api/alibaba/shipping-estimate
 Content-Type: application/json
@@ -111,11 +116,12 @@ Content-Type: application/json
   "keyword": "search term",
   "pageNo": 1,
   "pageSize": 20,
-  "sortBy": "price_asc"      // or "price_desc", "relevance"
+  "sortBy": "price_asc" // or "price_desc", "relevance"
 }
 ```
 
 **Supported Destinations for Shipping:**
+
 - `US` - United States
 - `EU` - European Union
 - `UZ` - Uzbekistan
@@ -124,6 +130,7 @@ Content-Type: application/json
 ## Pricing Tiers
 
 tmapi.top offers:
+
 - **Free Plan**: Limited requests per day
 - **Pro Plan**: Higher request limits
 - **Enterprise**: Custom solutions
@@ -139,6 +146,7 @@ Check https://tmapi.top for current pricing.
 ## Troubleshooting
 
 ### "TMAPI_TOKEN is not set" Error
+
 ```bash
 # Make sure .env file has:
 TMAPI_TOKEN=your_token_here
@@ -148,16 +156,19 @@ npm run dev
 ```
 
 ### "401 Unauthorized" Error
+
 - Check your token is copied correctly (no extra spaces)
 - Verify the token hasn't expired
 - Try regenerating a new token in tmapi.top dashboard
 
 ### No Results for Common Products
+
 - The API searches for wholesale products (B2B)
 - Try less specific keywords
 - Check if the product exists on 1688.com directly
 
 ### Slow Responses
+
 - First request may be slower (cold start)
 - Use caching to speed up repeated searches
 - Reduce pageSize if searching slow
@@ -169,7 +180,7 @@ npm run dev
 ✅ **Shipping Estimation** - Calculate delivery costs  
 ✅ **Multi-currency** - USD, CNY, UZS support  
 ✅ **Error Handling** - Graceful fallbacks  
-✅ **Type-safe** - Full TypeScript support  
+✅ **Type-safe** - Full TypeScript support
 
 ## File Structure
 
@@ -201,12 +212,14 @@ TMAPI_SETUP.md          ← This file
 ## Security Reminders
 
 🔒 **Never:**
+
 - Commit your API token to git
 - Share your token publicly
 - Use the same token across multiple apps
 - Log your token in console
 
 ✅ **Always:**
+
 - Store token in `.env` file
 - Use environment variables
 - Regenerate token if compromised

@@ -31,7 +31,8 @@ export const products: Product[] = [
     name: "USB-C Fast Charger 65W",
     price: 12.5,
     category: "electronics",
-    description: "Universal USB-C charger, supports PD fast charging for all devices.",
+    description:
+      "Universal USB-C charger, supports PD fast charging for all devices.",
     images: [
       "https://images.unsplash.com/photo-1591632282515-31148020b9c0?auto=format&fit=crop&w=800&q=80",
     ],
@@ -44,7 +45,8 @@ export const products: Product[] = [
     name: "LED Ring Light with Tripod",
     price: 18.75,
     category: "electronics",
-    description: "10 inch ring light with adjustable stand for streaming and photography.",
+    description:
+      "10 inch ring light with adjustable stand for streaming and photography.",
     images: [
       "https://images.unsplash.com/photo-1609042235577-7a28ee20ce76?auto=format&fit=crop&w=800&q=80",
     ],
@@ -57,7 +59,8 @@ export const products: Product[] = [
     name: "Smart Watch Sport Band",
     price: 9.99,
     category: "electronics",
-    description: "Colorful silicone sport bands compatible with most smartwatches.",
+    description:
+      "Colorful silicone sport bands compatible with most smartwatches.",
     images: [
       "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80",
     ],
@@ -70,7 +73,8 @@ export const products: Product[] = [
     name: "Portable Phone Stand",
     price: 6.99,
     category: "electronics",
-    description: "Aluminum foldable phone stand for desk, compatible with all phones.",
+    description:
+      "Aluminum foldable phone stand for desk, compatible with all phones.",
     images: [
       "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80",
     ],
@@ -99,7 +103,8 @@ export const products: Product[] = [
     name: "Windproof Jacket",
     price: 22.5,
     category: "clothing",
-    description: "Lightweight waterproof jacket, perfect for outdoor activities.",
+    description:
+      "Lightweight waterproof jacket, perfect for outdoor activities.",
     images: [
       "https://images.unsplash.com/photo-1551028719-00167b16ebc5?auto=format&fit=crop&w=800&q=80",
     ],
@@ -125,8 +130,7 @@ export const products: Product[] = [
     name: "Winter Beanie Hats",
     price: 7.99,
     category: "clothing",
-    description:
-      "Warm knitted beanies, soft fleece lining, one size fits all.",
+    description: "Warm knitted beanies, soft fleece lining, one size fits all.",
     images: [
       "https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&w=800&q=80",
     ],
@@ -249,7 +253,8 @@ export const products: Product[] = [
     name: "Resistance Bands Set",
     price: 12.99,
     category: "sports",
-    description: "5 resistance bands with different strengths and carrying case.",
+    description:
+      "5 resistance bands with different strengths and carrying case.",
     images: [
       "https://images.unsplash.com/photo-1521395633066-841557a0ec02?auto=format&fit=crop&w=800&q=80",
     ],

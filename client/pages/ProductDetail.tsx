@@ -1,6 +1,14 @@
 import GlassCard from "@/components/GlassCard";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Heart, ShoppingCart, Star, Share2, Plus, Minus } from "lucide-react";
+import {
+  ArrowLeft,
+  Heart,
+  ShoppingCart,
+  Star,
+  Share2,
+  Plus,
+  Minus,
+} from "lucide-react";
 import { useShop } from "@/context/ShopContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { products } from "@/data/products";
@@ -140,7 +148,9 @@ export default function ProductDetail() {
             </span>
           </div>
           <h2 className="text-xl font-semibold">{product.name}</h2>
-          <p className="text-sm text-foreground/70 mt-2">{product.description}</p>
+          <p className="text-sm text-foreground/70 mt-2">
+            {product.description}
+          </p>
         </div>
 
         {/* Rating */}
@@ -168,7 +178,8 @@ export default function ProductDetail() {
               {convertPrice(product.price)}
             </div>
             <div className="text-xs text-foreground/70 mt-1">
-              In stock: <span className="text-green-500 font-medium">250+ units</span>
+              In stock:{" "}
+              <span className="text-green-500 font-medium">250+ units</span>
             </div>
           </div>
           <div className="text-right">
@@ -196,7 +207,9 @@ export default function ProductDetail() {
           <div className="flex items-center justify-between">
             <div>
               <div className="text-xs text-foreground/70 mb-1">Sold by</div>
-              <div className="font-medium">{product.seller || "ChinaMall Store"}</div>
+              <div className="font-medium">
+                {product.seller || "ChinaMall Store"}
+              </div>
             </div>
             <button className="px-4 h-9 rounded-lg bg-white/70 dark:bg-white/10 border border-white/20 text-sm hover:border-primary/40 transition">
               Contact seller
@@ -289,7 +302,9 @@ export default function ProductDetail() {
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-foreground/70">{review.date}</div>
+                  <div className="text-xs text-foreground/70">
+                    {review.date}
+                  </div>
                 </div>
               </div>
               <div className="flex gap-1 mb-2">
@@ -302,11 +317,13 @@ export default function ProductDetail() {
                     <span key={i} className="text-foreground/30 text-sm">
                       ★
                     </span>
-                  )
+                  ),
                 )}
               </div>
               <h4 className="font-medium text-sm mb-1">{review.title}</h4>
-              <p className="text-sm text-foreground/70 mb-3">{review.content}</p>
+              <p className="text-sm text-foreground/70 mb-3">
+                {review.content}
+              </p>
               <button className="text-xs text-foreground/60 hover:text-foreground transition">
                 👍 Helpful ({review.helpful})
               </button>

@@ -214,7 +214,9 @@ export default function Index() {
                   </button>
                 </div>
                 <div className="p-2">
-                  <div className="text-xs font-medium truncate mb-1">{p.name}</div>
+                  <div className="text-xs font-medium truncate mb-1">
+                    {p.name}
+                  </div>
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-sm font-semibold text-primary">
                       {convertPrice(p.price)}

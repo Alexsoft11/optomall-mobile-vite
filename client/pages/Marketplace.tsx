@@ -1,9 +1,5 @@
 import GlassCard from "@/components/GlassCard";
-import {
-  ShoppingCart,
-  Heart,
-  X,
-} from "lucide-react";
+import { ShoppingCart, Heart, X } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { products } from "@/data/products";
@@ -18,7 +14,7 @@ export default function Marketplace() {
   const { items } = useProducts();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState(
-    searchParams.get("category") || ""
+    searchParams.get("category") || "",
   );
   const [sortBy, setSortBy] = useState("newest");
   const [priceRange, setPriceRange] = useState([0, 50]);
@@ -38,7 +34,7 @@ export default function Marketplace() {
     }
 
     filtered = filtered.filter(
-      (p) => p.price >= priceRange[0] && p.price <= priceRange[1]
+      (p) => p.price >= priceRange[0] && p.price <= priceRange[1],
     );
 
     let sorted = [...filtered];
