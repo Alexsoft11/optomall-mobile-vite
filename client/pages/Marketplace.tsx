@@ -14,6 +14,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 export default function Marketplace() {
   const navigate = useNavigate();
   const { addToCart, toggleFavorite, isFavorite } = useShop();
+  const { convertPrice } = useCurrency();
   const { items } = useProducts();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState(
