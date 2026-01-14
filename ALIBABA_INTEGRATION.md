@@ -1,35 +1,43 @@
-# Alibaba/1688 API Integration Guide
+# 1688/Alibaba API Integration Guide
 
-This project includes a basic setup for integrating with Alibaba and 1688 APIs to fetch products directly from China. This guide explains how to set up and use the integration.
+This project integrates with **1688/Alibaba** through **tmapi.top**, a simplified API wrapper for accessing Chinese wholesale products directly.
 
 ## Overview
 
 The integration consists of:
-1. **Server routes** (`server/routes/alibaba.ts`) - Backend API endpoints
+1. **Server routes** (`server/routes/alibaba.ts`) - Backend API endpoints powered by tmapi.top
 2. **React hook** (`client/hooks/useAlibaba.ts`) - Frontend hook for API calls
-3. **Shared types** - For type-safe data handling
+3. **Type-safe interfaces** - For consistent data handling
+
+## Features
+
+✅ **Search Products** - Find items by keyword with filters
+✅ **Get Product Details** - Full product info with images, specifications
+✅ **Estimate Shipping** - Calculate shipping costs and delivery time
+✅ **Multi-currency Support** - Integrated with USD, CNY, UZS converters
+✅ **Real-time Data** - Direct API calls to 1688/Alibaba
 
 ## Setup Instructions
 
-### 1. Get API Credentials
+### 1. Register with tmapi.top
 
-To use the Alibaba API, you need to:
+To use this integration, you need to:
 
-1. Register as a developer on [Alibaba Developer Center](https://developer.alibabacloud.com/)
-2. Create an application to get your API credentials
-3. Apply for API access to the product search service
-4. Get your `API_KEY` and `API_SECRET`
+1. Visit [tmapi.top](https://tmapi.top)
+2. Register for a free account
+3. Get your **API Token** from the dashboard
+4. Check out the [API Documentation](https://tmapi.top/docs)
 
 ### 2. Set Environment Variables
 
-Add these to your `.env` file:
+Add this to your `.env` file:
 
 ```bash
-# Alibaba API Configuration
-ALIBABA_API_KEY=your_api_key_here
-ALIBABA_API_SECRET=your_api_secret_here
-ALIBABA_API_ENDPOINT=https://api.alibaba.com/v1
+# tmapi.top Configuration for 1688 API
+TMAPI_TOKEN=your_api_token_here
 ```
+
+**Note:** tmapi.top offers a free tier with sufficient requests for development.
 
 ### 3. Implement Actual API Calls
 
