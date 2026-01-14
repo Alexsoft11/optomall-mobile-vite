@@ -8,7 +8,7 @@ import { useShop } from "@/context/ShopContext";
 import { products } from "@/data/products";
 import { useProducts } from "@/hooks/useProducts";
 import { useState, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 export default function Marketplace() {
   const { addToCart, toggleFavorite, isFavorite } = useShop();
