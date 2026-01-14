@@ -9,6 +9,7 @@ import { useProducts } from "@/hooks/useProducts";
 export default function Index() {
   const navigate = useNavigate();
   const { addToCart, toggleFavorite, isFavorite } = useShop();
+  const { convertPrice } = useCurrency();
   const { items: productsList } = useProducts();
 
   const featured = productsList.slice(0, 4);
