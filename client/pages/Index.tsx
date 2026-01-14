@@ -181,50 +181,59 @@ export default function Index() {
         </div>
         <div className="grid grid-cols-2 gap-3">
           {latest.map((p) => (
-            <GlassCard
+            <div
               key={p.id}
-              className="overflow-hidden hover:ring-2 hover:ring-primary/40 transition cursor-pointer"
+              onClick={() => navigate(`/product/${p.id}`)}
+              className="cursor-pointer"
             >
-              <div className="h-28 bg-gradient-to-b from-muted to-card relative overflow-hidden">
-                {p.images && p.images[0] && (
-                  <img
-                    src={p.images[0]}
-                    alt={p.name}
-                    className="w-full h-full object-cover"
-                  />
-                )}
-                <button
-                  onClick={() => toggleFavorite(p.id)}
-                  className="absolute top-2 right-2 size-8 rounded-lg grid place-items-center bg-white/80 dark:bg-white/20 border border-white/20"
-                >
-                  <Heart
-                    className={
-                      isFavorite(p.id)
-                        ? "size-4 text-destructive fill-current"
-                        : "size-4 text-foreground/60"
-                    }
-                  />
-                </button>
-              </div>
-              <div className="p-2">
-                <div className="text-xs font-medium truncate mb-1">{p.name}</div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm font-semibold text-primary">
-                    ${p.price.toFixed(2)}
-                  </div>
-                  <div className="text-xs text-amber-500">
-                    ★ {p.rating?.toFixed(1) || "0"}
-                  </div>
+              <GlassCard className="overflow-hidden hover:ring-2 hover:ring-primary/40 transition h-full">
+                <div className="h-28 bg-gradient-to-b from-muted to-card relative overflow-hidden">
+                  {p.images && p.images[0] && (
+                    <img
+                      src={p.images[0]}
+                      alt={p.name}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite(p.id);
+                    }}
+                    className="absolute top-2 right-2 size-8 rounded-lg grid place-items-center bg-white/80 dark:bg-white/20 border border-white/20"
+                  >
+                    <Heart
+                      className={
+                        isFavorite(p.id)
+                          ? "size-4 text-destructive fill-current"
+                          : "size-4 text-foreground/60"
+                      }
+                    />
+                  </button>
                 </div>
-                <button
-                  onClick={() => addToCart(p)}
-                  className="w-full h-7 rounded-lg bg-white/70 dark:bg-white/10 border border-white/30 text-xs hover:ring-2 hover:ring-primary/40"
-                >
-                  <ShoppingCart className="size-3 inline mr-1" />
-                  Add
-                </button>
-              </div>
-            </GlassCard>
+                <div className="p-2">
+                  <div className="text-xs font-medium truncate mb-1">{p.name}</div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-semibold text-primary">
+                      ${p.price.toFixed(2)}
+                    </div>
+                    <div className="text-xs text-amber-500">
+                      ★ {p.rating?.toFixed(1) || "0"}
+                    </div>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addToCart(p);
+                    }}
+                    className="w-full h-7 rounded-lg bg-white/70 dark:bg-white/10 border border-white/30 text-xs hover:ring-2 hover:ring-primary/40"
+                  >
+                    <ShoppingCart className="size-3 inline mr-1" />
+                    Add
+                  </button>
+                </div>
+              </GlassCard>
+            </div>
           ))}
         </div>
       </section>
