@@ -2,6 +2,7 @@ import GlassCard from "@/components/GlassCard";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Heart, ShoppingCart, Star, Share2, Plus, Minus } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
+import { useCurrency } from "@/context/CurrencyContext";
 import { products } from "@/data/products";
 import { useState } from "react";
 
