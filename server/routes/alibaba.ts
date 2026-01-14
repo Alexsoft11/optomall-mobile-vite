@@ -67,8 +67,8 @@ interface SearchParams {
 }
 
 /**
- * Search products on Alibaba
- * 
+ * Search products on 1688
+ *
  * Usage: POST /api/alibaba/search
  * Body: {
  *   keyword: "wireless earbuds",
@@ -88,63 +88,54 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: "keyword is required" });
     }
 
-    // TODO: Implement actual Alibaba API call
-    // This is a mock response for development
-    const mockProducts: AlibabaProduct[] = [
-      {
-        id: "ali_1",
-        name: `${keyword} - Product 1`,
-        price: 15.99,
-        originalPrice: 19.99,
+    // Call tmapi.top API for 1688 product search
+    const params: Record<string, any> = {
+      keywords: keyword,
+      page: pageNo,
+      pageSize: pageSize,
+    };
+
+    // Add filters if provided
+    if (sortBy) {
+      // sortType: 0 = relevance, 1 = price asc, 2 = price desc
+      params.sortType = sortBy === "price_asc" ? 1 : sortBy === "price_desc" ? 2 : 0;
+    }
+
+    const response = await tmapiRequest("ali/search/search-items", params);
+
+    // Transform tmapi.top response to our format
+    const products: AlibabaProduct[] = (response.data?.items || []).map(
+      (item: any) => ({
+        id: item.itemId,
+        name: item.title,
+        price: item.minPrice || item.price,
+        originalPrice: item.maxPrice || item.price * 1.2,
         unit: "piece",
-        images: [
-          "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400",
-        ],
+        images: item.imageList || [item.image],
         seller: {
-          id: "seller_1",
-          name: "Electronics Store",
-          rating: 4.8,
+          id: item.supplierId,
+          name: item.supplierName,
+          rating: item.rating || 4.5,
         },
-        minOrder: 1,
+        minOrder: item.minOrder || 1,
         logistics: {
           deliveryDays: 15,
           shippingCost: 5,
         },
-      },
-      {
-        id: "ali_2",
-        name: `${keyword} - Product 2`,
-        price: 12.5,
-        originalPrice: 16.99,
-        unit: "piece",
-        images: [
-          "https://images.unsplash.com/photo-1591632282515-31148020b9c0?w=400",
-        ],
-        seller: {
-          id: "seller_2",
-          name: "Tech Wholesale",
-          rating: 4.6,
-        },
-        minOrder: 5,
-        logistics: {
-          deliveryDays: 20,
-          shippingCost: 3,
-        },
-      },
-    ];
+      })
+    );
 
     res.json({
       success: true,
-      data: mockProducts,
-      total: mockProducts.length,
+      data: products,
+      total: response.data?.totalCount || 0,
       pageNo,
       pageSize,
-      message: "Using mock data - implement actual Alibaba API integration",
     });
   } catch (error) {
-    console.error("Alibaba search error:", error);
+    console.error("1688 search error:", error);
     res.status(500).json({
-      error: "Failed to search Alibaba products",
+      error: "Failed to search 1688 products",
       details: error instanceof Error ? error.message : "Unknown error",
     });
   }
