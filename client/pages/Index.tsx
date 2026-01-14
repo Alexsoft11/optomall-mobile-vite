@@ -217,7 +217,7 @@ export default function Index() {
                   <div className="text-xs font-medium truncate mb-1">{p.name}</div>
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-sm font-semibold text-primary">
-                      ${p.price.toFixed(2)}
+                      {convertPrice(p.price)}
                     </div>
                     <div className="text-xs text-amber-500">
                       ★ {p.rating?.toFixed(1) || "0"}
