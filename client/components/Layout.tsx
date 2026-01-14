@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useShop } from "@/context/ShopContext";
+import { useCurrency } from "@/context/CurrencyContext";
 
 interface LayoutProps {
   children: ReactNode;
@@ -28,6 +29,7 @@ const tabs = [
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const { cart, favorites } = useShop();
+  const { currency, setCurrency } = useCurrency();
   const navRef = useRef<HTMLDivElement | null>(null);
   const indicatorRef = useRef<HTMLDivElement | null>(null);
   const [indicatorStyle, setIndicatorStyle] = useState<{
@@ -88,6 +90,16 @@ export default function Layout({ children }: LayoutProps) {
               />
             </div>
           </div>
+          <select
+            onChange={(e) => setCurrency(e.target.value as any)}
+            value={currency}
+            className="px-3 h-10 rounded-2xl bg-white/60 dark:bg-white/10 border border-white/40 dark:border-white/10 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent"
+            aria-label="Select currency"
+          >
+            <option value="USD">USD</option>
+            <option value="CNY">CNY</option>
+            <option value="UZS">UZS</option>
+          </select>
           <button
             onClick={() => {
               const root = document.documentElement;
