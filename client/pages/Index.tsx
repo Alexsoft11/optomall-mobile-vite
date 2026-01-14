@@ -99,57 +99,66 @@ export default function Index() {
         </div>
         <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2">
           {featured.map((p) => (
-            <GlassCard
+            <div
               key={p.id}
-              className="min-w-[200px] snap-start overflow-hidden hover:ring-2 hover:ring-primary/40 transition cursor-pointer"
+              onClick={() => navigate(`/product/${p.id}`)}
+              className="min-w-[200px] snap-start cursor-pointer"
             >
-              <div className="h-40 bg-gradient-to-b from-muted to-card relative overflow-hidden">
-                {p.images && p.images[0] && (
-                  <img
-                    src={p.images[0]}
-                    alt={p.name}
-                    className="w-full h-full object-cover"
-                  />
-                )}
-                <button
-                  onClick={() => toggleFavorite(p.id)}
-                  className="absolute top-2 right-2 size-8 rounded-lg grid place-items-center bg-white/80 dark:bg-white/20 border border-white/20 hover:bg-white dark:hover:bg-white/30"
-                >
-                  <Heart
-                    className={
-                      isFavorite(p.id)
-                        ? "size-4 text-destructive fill-current"
-                        : "size-4 text-foreground/60"
-                    }
-                  />
-                </button>
-              </div>
-              <div className="p-3">
-                <div className="text-xs text-foreground/60 mb-1 capitalize">
-                  {p.category}
+              <GlassCard className="overflow-hidden hover:ring-2 hover:ring-primary/40 transition h-full">
+                <div className="h-40 bg-gradient-to-b from-muted to-card relative overflow-hidden">
+                  {p.images && p.images[0] && (
+                    <img
+                      src={p.images[0]}
+                      alt={p.name}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite(p.id);
+                    }}
+                    className="absolute top-2 right-2 size-8 rounded-lg grid place-items-center bg-white/80 dark:bg-white/20 border border-white/20 hover:bg-white dark:hover:bg-white/30"
+                  >
+                    <Heart
+                      className={
+                        isFavorite(p.id)
+                          ? "size-4 text-destructive fill-current"
+                          : "size-4 text-foreground/60"
+                      }
+                    />
+                  </button>
                 </div>
-                <div className="text-sm font-medium truncate line-clamp-2 mb-1">
-                  {p.name}
-                </div>
-                <div className="flex items-center gap-1 mb-2">
-                  <div className="flex text-xs text-amber-500">
-                    {"★".repeat(Math.floor(p.rating || 0))}
+                <div className="p-3">
+                  <div className="text-xs text-foreground/60 mb-1 capitalize">
+                    {p.category}
                   </div>
-                  <span className="text-xs text-foreground/60">
-                    ({p.reviews || 0})
-                  </span>
+                  <div className="text-sm font-medium truncate line-clamp-2 mb-1">
+                    {p.name}
+                  </div>
+                  <div className="flex items-center gap-1 mb-2">
+                    <div className="flex text-xs text-amber-500">
+                      {"★".repeat(Math.floor(p.rating || 0))}
+                    </div>
+                    <span className="text-xs text-foreground/60">
+                      ({p.reviews || 0})
+                    </span>
+                  </div>
+                  <div className="text-sm font-semibold text-primary mb-2">
+                    ${p.price.toFixed(2)}
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addToCart(p);
+                    }}
+                    className="w-full h-8 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 transition"
+                  >
+                    Add to cart
+                  </button>
                 </div>
-                <div className="text-sm font-semibold text-primary mb-2">
-                  ${p.price.toFixed(2)}
-                </div>
-                <button
-                  onClick={() => addToCart(p)}
-                  className="w-full h-8 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 transition"
-                >
-                  Add to cart
-                </button>
-              </div>
-            </GlassCard>
+              </GlassCard>
+            </div>
           ))}
         </div>
       </section>
