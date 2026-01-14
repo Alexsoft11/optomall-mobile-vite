@@ -66,7 +66,7 @@ interface AlibabaProduct {
 
 ## API Endpoints
 
-### 1. Search Products
+### 1. Search 1688 Products
 
 **Endpoint:** `POST /api/alibaba/search`
 
@@ -76,9 +76,7 @@ interface AlibabaProduct {
   "keyword": "wireless earbuds",
   "pageNo": 1,
   "pageSize": 20,
-  "sortBy": "price_asc",
-  "minPrice": 5,
-  "maxPrice": 50
+  "sortBy": "price_asc"
 }
 ```
 
@@ -88,15 +86,18 @@ interface AlibabaProduct {
   "success": true,
   "data": [
     {
-      "id": "ali_1",
-      "name": "Wireless Earbuds Pro",
-      "price": 15.99,
-      "originalPrice": 24.99,
+      "id": "627234567",
+      "name": "Premium Wireless Earbuds with Noise Cancellation",
+      "price": 8.50,
+      "originalPrice": 12.99,
       "unit": "piece",
-      "images": ["url1", "url2"],
+      "images": [
+        "https://img.alicdn.com/...",
+        "https://img.alicdn.com/..."
+      ],
       "seller": {
-        "id": "seller_1",
-        "name": "Electronics Store",
+        "id": "b2b1234567",
+        "name": "Electronics Supplier Ltd.",
         "rating": 4.8
       },
       "minOrder": 1,
