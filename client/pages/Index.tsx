@@ -6,6 +6,7 @@ import { products } from "@/data/products";
 import { useProducts } from "@/hooks/useProducts";
 
 export default function Index() {
+  const navigate = useNavigate();
   const { addToCart, toggleFavorite, isFavorite } = useShop();
   const { items: productsList } = useProducts();
 
