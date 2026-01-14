@@ -227,91 +227,132 @@ function MyComponent() {
 
 ## Best Practices
 
-### 1. Rate Limiting
+### 1. API Token Security
+```bash
+# NEVER commit your TMAPI_TOKEN to git
+echo "TMAPI_TOKEN=your_token" >> .env
+# Add .env to .gitignore
+```
+
+### 2. Error Handling
+The implementation includes fallback mechanisms:
+- If the API call fails, shipping estimates use default calculations
+- Product searches gracefully handle API errors
+
+### 3. Rate Limiting
+tmapi.top has built-in rate limiting. For production:
 ```typescript
-// Add rate limiting to prevent API abuse
 import rateLimit from 'express-rate-limit';
 
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100
+  windowMs: 60 * 1000,      // 1 minute
+  max: 100                   // 100 requests per minute
 });
 
 app.post('/api/alibaba/search', limiter, searchAlibabaProducts);
 ```
 
-### 2. Caching
+### 4. Caching
+Cache popular searches to reduce API calls:
 ```typescript
-// Cache popular searches
 const searchCache = new Map();
+const CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
-export const searchAlibabaProducts = async (req, res) => {
+export const searchAlibabaProducts: RequestHandler = async (req, res) => {
   const cacheKey = JSON.stringify(req.body);
-  
+
   if (searchCache.has(cacheKey)) {
     return res.json(searchCache.get(cacheKey));
   }
-  
+
   // ... perform search ...
   searchCache.set(cacheKey, result);
 };
 ```
 
-### 3. Error Handling
-Always wrap API calls in try-catch and return meaningful error messages to the client.
-
-### 4. Data Transformation
-Ensure incoming data is transformed to match your app's Product interface:
-
+### 5. Data Validation
+Always validate incoming data:
 ```typescript
-interface AlibabaProduct {
-  id: string;
-  name: string;
-  price: number;
-  originalPrice: number;
-  unit: string;
-  images: string[];
-  seller: { id: string; name: string; rating: number };
-  minOrder: number;
-  logistics?: { deliveryDays: number; shippingCost: number };
+if (!keyword || keyword.length < 2) {
+  return res.status(400).json({ error: "Keyword must be at least 2 characters" });
 }
 ```
 
 ## Troubleshooting
 
-### API Returns 401 Unauthorized
-- Check your API credentials in `.env`
-- Verify the credentials haven't expired
-- Ensure you have API access enabled
+### "TMAPI_TOKEN is not set"
+**Solution:** Make sure your `.env` file contains:
+```bash
+TMAPI_TOKEN=your_actual_token_from_tmapi.top
+```
 
-### Slow Search Results
-- Implement caching strategy
-- Add pagination to limit results per request
-- Consider using filters (minPrice, maxPrice) to narrow results
+### No Search Results
+1. Check that the keyword is correct
+2. Try searching on [tmapi.top](https://tmapi.top) directly with the same keyword
+3. Verify your API token is still valid
+4. Check the server logs for detailed error messages
 
-### Missing Product Images
-- Alibaba returns image URLs that may need transformation
-- Cache images locally or use a CDN
-- Implement fallback placeholder images
+### Slow API Responses
+- tmapi.top may take 2-3 seconds for complex searches
+- Implement client-side loading indicators
+- Use caching for frequent searches
+- Consider pagination to limit results
+
+### Product Images Not Loading
+- Use image URLs directly from tmapi.top (they're already optimized)
+- Implement lazy loading for better performance
+- Add fallback placeholder images
+
+### Shipping Cost Estimation Issues
+- Verify the productId is correct
+- Check the destination country code format (US, EU, UZ, etc.)
+- Quantity must be a positive number
+
+## Advanced Features
+
+### Bulk Product Sync
+```typescript
+// Sync multiple products at once
+async function bulkSyncProducts(productIds: string[]) {
+  const results = await Promise.all(
+    productIds.map(id => getAlibabaProductDetail(id))
+  );
+  return results;
+}
+```
+
+### Search with Multiple Filters
+```typescript
+const searchParams = {
+  keyword: "electronics",
+  pageNo: 1,
+  pageSize: 50,
+  sortBy: "price_asc",
+  minPrice: 5,
+  maxPrice: 100
+};
+```
 
 ## Next Steps
 
-1. **Implement actual API calls** - Replace mock data with real Alibaba API
-2. **Add product sync** - Periodically sync products to local database
-3. **Implement inventory management** - Track stock levels
-4. **Add supplier management** - Manage multiple suppliers
-5. **Implement order fulfillment** - Automate order placement with suppliers
+1. ✅ **API Integration** - Already set up with tmapi.top
+2. **Database Storage** - Store synced products in Supabase
+3. **Inventory Management** - Track stock levels
+4. **Order Processing** - Automate order creation with suppliers
+5. **Notifications** - Notify users of price changes or new products
 
 ## References
 
-- [Alibaba Open Platform](https://open.alibaba.com/)
-- [1688 API Documentation](https://openapi.1688.com/docs)
-- [Node.js API Best Practices](https://nodejs.org/en/docs/guides/)
+- [tmapi.top Documentation](https://tmapi.top/docs)
+- [1688 API Guide](https://tmapi.top/docs/ali)
+- [Product Search API](https://tmapi.top/docs/ali/item/search-items)
+- [Item Details API](https://tmapi.top/docs/ali/item-detail/get-item-detail-by-id)
 
 ## Support
 
-For issues with the integration:
-1. Check the troubleshooting section
-2. Review the mock API responses in `server/routes/alibaba.ts`
-3. Verify environment variables are set correctly
-4. Check browser console for frontend errors
+For integration issues:
+1. Verify TMAPI_TOKEN is set and valid
+2. Check tmapi.top API status page
+3. Review server logs: `npm run dev`
+4. Test API directly: `curl -X POST http://localhost:8080/api/alibaba/search -H "Content-Type: application/json" -d '{"keyword":"electronics"}'`
+5. Visit tmapi.top support for API-specific questions
