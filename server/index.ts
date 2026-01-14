@@ -24,5 +24,10 @@ export function createServer() {
 
   app.get("/api/demo", handleDemo);
 
+  // Alibaba API routes
+  app.post("/api/alibaba/search", searchAlibabaProducts);
+  app.get("/api/alibaba/product/:productId", getAlibabaProductDetail);
+  app.post("/api/alibaba/shipping-estimate", estimateShipping);
+
   return app;
 }
