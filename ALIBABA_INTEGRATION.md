@@ -39,42 +39,29 @@ TMAPI_TOKEN=your_api_token_here
 
 **Note:** tmapi.top offers a free tier with sufficient requests for development.
 
-### 3. Implement Actual API Calls
+### 3. How It Works
 
-The current implementation has mock responses. To use real data:
+The integration is already fully implemented with real API calls to tmapi.top:
 
-1. Open `server/routes/alibaba.ts`
-2. Replace the mock data in each function with actual API calls
-3. Use a library like `axios` or `node-fetch` to make HTTP requests
+1. **`server/routes/alibaba.ts`** - Contains actual API implementations:
+   - `searchAlibabaProducts` - Search 1688 products
+   - `getAlibabaProductDetail` - Get full product information
+   - `estimateShipping` - Calculate shipping costs
 
-Example implementation pattern:
+2. **Data Transformation** - tmapi.top responses are automatically converted to a unified format:
 
 ```typescript
-export const searchAlibabaProducts: RequestHandler = async (req, res) => {
-  try {
-    const { keyword, pageNo = 1, pageSize = 20 } = req.body;
-
-    // Make actual API call
-    const response = await fetch(`${process.env.ALIBABA_API_ENDPOINT}/products/search`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.ALIBABA_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        keywords: keyword,
-        pageNumber: pageNo,
-        pageSize: pageSize,
-      })
-    });
-
-    const data = await response.json();
-    // Transform data to match AlibabaProduct interface
-    res.json({ success: true, data: data.products });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to search' });
-  }
-};
+interface AlibabaProduct {
+  id: string;
+  name: string;
+  price: number;
+  originalPrice: number;
+  unit: string;
+  images: string[];
+  seller: { id: string; name: string; rating: number };
+  minOrder: number;
+  logistics?: { deliveryDays: number; shippingCost: number };
+}
 ```
 
 ## API Endpoints
