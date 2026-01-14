@@ -1,13 +1,41 @@
 import { RequestHandler } from "express";
 
 /**
- * Alibaba API Integration
- * This is a basic setup for integrating with Alibaba/1688 API
- * You need to:
- * 1. Get API credentials from Alibaba developer center
- * 2. Set ALIBABA_API_KEY and ALIBABA_API_SECRET in environment
- * 3. Implement actual API calls
+ * 1688/Alibaba API Integration via tmapi.top
+ *
+ * Setup:
+ * 1. Register at https://tmapi.top
+ * 2. Get your API token
+ * 3. Set TMAPI_TOKEN in environment variables
+ *
+ * API Documentation: https://tmapi.top/docs
  */
+
+const TMAPI_BASE_URL = "https://tmapi.top/api";
+const TMAPI_TOKEN = process.env.TMAPI_TOKEN || "";
+
+// Helper function to make tmapi.top API requests
+async function tmapiRequest(endpoint: string, params: Record<string, any> = {}) {
+  if (!TMAPI_TOKEN) {
+    throw new Error(
+      "TMAPI_TOKEN is not set. Please configure it in environment variables."
+    );
+  }
+
+  const queryParams = new URLSearchParams({
+    token: TMAPI_TOKEN,
+    ...params,
+  });
+
+  const response = await fetch(`${TMAPI_BASE_URL}/${endpoint}?${queryParams}`);
+
+  if (!response.ok) {
+    throw new Error(`tmapi.top API error: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data;
+}
 
 interface AlibabaProduct {
   id: string;
