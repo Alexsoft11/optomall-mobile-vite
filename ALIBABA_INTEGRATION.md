@@ -113,35 +113,55 @@ interface AlibabaProduct {
 }
 ```
 
-### 2. Get Product Details
+### 2. Get Product Details from 1688
 
 **Endpoint:** `GET /api/alibaba/product/:productId`
+
+**Example:**
+```bash
+GET /api/alibaba/product/627234567
+```
 
 **Response:**
 ```json
 {
   "success": true,
   "data": {
-    "id": "ali_1",
-    "name": "Wireless Earbuds Pro",
-    "price": 15.99,
-    "description": "High-quality wireless earbuds...",
+    "id": "627234567",
+    "name": "Premium Wireless Earbuds with Noise Cancellation",
+    "price": 8.50,
+    "originalPrice": 12.99,
+    "unit": "piece",
+    "images": [
+      "https://img.alicdn.com/image1.jpg",
+      "https://img.alicdn.com/image2.jpg"
+    ],
+    "seller": {
+      "id": "b2b1234567",
+      "name": "Electronics Supplier Ltd.",
+      "rating": 4.8
+    },
+    "minOrder": 1,
+    "description": "High-quality wireless earbuds with active noise cancellation...",
     "specifications": {
       "connectivity": "Bluetooth 5.0",
-      "batteryLife": "8 hours"
+      "batteryLife": "8 hours (24 hours with case)",
+      "waterResistance": "IPX5",
+      "material": "Plastic and silicone",
+      "warranty": "12 months"
     }
   }
 }
 ```
 
-### 3. Estimate Shipping
+### 3. Estimate Shipping Cost
 
 **Endpoint:** `POST /api/alibaba/shipping-estimate`
 
 **Request:**
 ```json
 {
-  "productId": "ali_1",
+  "productId": "627234567",
   "quantity": 100,
   "destination": "US"
 }
@@ -152,13 +172,17 @@ interface AlibabaProduct {
 {
   "success": true,
   "data": {
-    "shippingCost": 150,
+    "productId": "627234567",
+    "quantity": 100,
+    "destination": "US",
+    "shippingCost": 250.50,
     "currency": "USD",
     "estimatedDelivery": 20,
     "details": {
-      "handlingFee": 50,
-      "perUnitCost": 0.5,
-      "totalWeight": "5kg"
+      "baseCost": 50,
+      "perKgCost": 2,
+      "totalWeight": "50.00kg",
+      "shippingMethod": "DHL/FedEx/EMS"
     }
   }
 }
