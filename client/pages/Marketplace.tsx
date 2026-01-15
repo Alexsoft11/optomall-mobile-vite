@@ -32,6 +32,16 @@ export default function Marketplace() {
   const productsList = useMemo(() => {
     let filtered = items.length > 0 ? items : products;
 
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (p) =>
+          p.name.toLowerCase().includes(query) ||
+          p.description.toLowerCase().includes(query),
+      );
+    }
+
     if (selectedCategory) {
       filtered = filtered.filter((p) => p.category === selectedCategory);
     }
