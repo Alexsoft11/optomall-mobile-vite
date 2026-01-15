@@ -16,6 +16,9 @@ export default function Marketplace() {
   const [selectedCategory, setSelectedCategory] = useState(
     searchParams.get("category") || "",
   );
+  const [searchQuery, setSearchQuery] = useState(
+    searchParams.get("search") || "",
+  );
   const [sortBy, setSortBy] = useState("newest");
   const [priceRange, setPriceRange] = useState([0, 50]);
 
