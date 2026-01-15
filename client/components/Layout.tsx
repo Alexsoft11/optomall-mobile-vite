@@ -28,14 +28,24 @@ const tabs = [
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { cart, favorites } = useShop();
   const { currency, setCurrency } = useCurrency();
   const navRef = useRef<HTMLDivElement | null>(null);
   const indicatorRef = useRef<HTMLDivElement | null>(null);
+  const [searchValue, setSearchValue] = useState("");
   const [indicatorStyle, setIndicatorStyle] = useState<{
     left: number;
     width: number;
   }>({ left: 0, width: 0 });
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (searchValue.trim()) {
+      navigate(`/marketplace?search=${encodeURIComponent(searchValue)}`);
+      setSearchValue("");
+    }
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
