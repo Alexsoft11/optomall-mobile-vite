@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useRef, useState, useLayoutEffect } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
   Grid3X3,
