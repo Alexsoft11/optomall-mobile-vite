@@ -71,7 +71,7 @@ export default function Marketplace() {
     }
 
     return sorted;
-  }, [selectedCategory, sortBy, priceRange, items]);
+  }, [selectedCategory, sortBy, priceRange, items, searchQuery]);
 
   const handleCategoryToggle = (catId: string) => {
     if (selectedCategory === catId) {
