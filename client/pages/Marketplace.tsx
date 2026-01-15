@@ -88,9 +88,23 @@ export default function Marketplace() {
     <div className="px-4 pb-6 pt-4 space-y-4">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold mb-1">Shop</h1>
+        <h1 className="text-2xl font-semibold mb-1">
+          {searchQuery ? `Search: "${searchQuery}"` : "Shop"}
+        </h1>
         <p className="text-sm text-foreground/70">
           {productsList.length} products found
+          {searchQuery && (
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                searchParams.delete("search");
+                setSearchParams(searchParams);
+              }}
+              className="ml-2 text-primary hover:text-primary/80"
+            >
+              (clear search)
+            </button>
+          )}
         </p>
       </div>
 
