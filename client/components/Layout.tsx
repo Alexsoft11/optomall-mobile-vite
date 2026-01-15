@@ -91,15 +91,18 @@ export default function Layout({ children }: LayoutProps) {
           <div className="size-9 rounded-xl bg-gradient-to-br from-primary/80 to-accent/70 shadow-[0_0_30px_rgb(0_0_0/0.08)] ring-1 ring-white/30 flex items-center justify-center text-primary-foreground font-bold">
             O
           </div>
-          <div className="flex-1">
+          <form onSubmit={handleSearch} className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-foreground/60" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-foreground/60 pointer-events-none" />
               <input
+                type="text"
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
                 className="w-full h-10 rounded-2xl bg-white/60 dark:bg-white/10 border border-white/40 dark:border-white/10 pl-9 pr-3 text-sm placeholder:text-foreground/50 outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_0_0_1px_rgba(255,255,255,0.2)]"
                 placeholder="Search products from China"
               />
             </div>
-          </div>
+          </form>
           <select
             onChange={(e) => setCurrency(e.target.value as any)}
             value={currency}
