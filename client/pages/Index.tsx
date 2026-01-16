@@ -70,11 +70,20 @@ export default function Index() {
           </h2>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          {categories.map((cat) => (
+          {categories.map((cat, idx) => (
             <RouterLink
               key={cat.id}
               to={`/marketplace?category=${cat.id}`}
-              className="p-4 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-white/20 hover:border-primary/40 hover:bg-gradient-to-br hover:from-primary/20 hover:to-accent/20 transition text-center"
+              className={`p-4 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-white/20 hover:border-primary/40 hover:bg-gradient-to-br hover:from-primary/20 hover:to-accent/20 transition ${
+                cat.id === "dishes"
+                  ? "flex flex-col justify-center items-center"
+                  : "text-center"
+              }`}
+              style={
+                cat.id === "electronics"
+                  ? { borderRadius: "12", fontWeight: "40px" }
+                  : undefined
+              }
             >
               <div className="text-3xl mb-2">{cat.icon}</div>
               <div className="text-sm font-medium">{cat.label}</div>
