@@ -126,16 +126,17 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
 
     // Call tmapi.top API for 1688 product search
     const params: Record<string, any> = {
-      keywords: keyword,
+      keyword: keyword,
       page: pageNo,
-      pageSize: pageSize,
+      page_size: pageSize,
     };
 
-    // Add filters if provided
+    // Add sort parameter if provided
+    // TMAPI accepts: default, sales, price_asc, price_desc
     if (sortBy) {
-      // sortType: 0 = relevance, 1 = price asc, 2 = price desc
-      params.sortType =
-        sortBy === "price_asc" ? 1 : sortBy === "price_desc" ? 2 : 0;
+      params.sort = sortBy;
+    } else {
+      params.sort = "default";
     }
 
     const response = await tmapiRequest("1688/en/search/items", params);
