@@ -173,7 +173,7 @@ export default function Index() {
                 </div>
                 <div className="p-3">
                   <div className="text-xs text-foreground/60 mb-1 capitalize">
-                    {p.category}
+                    {(p as any).category || "electronics"}
                   </div>
                   <div className="text-sm font-medium truncate line-clamp-2 mb-1">
                     {p.name}
