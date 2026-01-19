@@ -35,7 +35,7 @@ async function tmapiRequest(
   });
 
   const url = `${TMAPI_BASE_URL}/${endpoint}?${queryParams}`;
-  console.log(`[TMAPI] Calling: ${endpoint}...`);
+  console.log(`[TMAPI] Calling: ${url}`);
 
   const response = await fetch(url);
 
