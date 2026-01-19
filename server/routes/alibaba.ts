@@ -19,6 +19,21 @@ const TMAPI_TOKEN = process.env.VITE_TMAPI_API_TOKEN || process.env.TMAPI_TOKEN 
 console.log("[TMAPI] Base URL:", TMAPI_BASE_URL);
 console.log("[TMAPI] Token configured:", TMAPI_TOKEN ? "✓" : "✗");
 
+// Helper function to convert image URLs to proxy URLs
+function proxifyImageUrls(images: any[]): string[] {
+  if (!images) return [];
+
+  return images
+    .filter((img: any) => img) // Filter out null/undefined
+    .map((img: string) => {
+      // Only proxy if it's an external URL
+      if (img && typeof img === 'string' && img.startsWith('http')) {
+        return `/api/alibaba/image?url=${encodeURIComponent(img)}`;
+      }
+      return img;
+    });
+}
+
 // Helper function to make tmapi.top API requests
 async function tmapiRequest(
   endpoint: string,
