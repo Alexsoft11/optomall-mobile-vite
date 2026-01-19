@@ -127,7 +127,7 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
         sortBy === "price_asc" ? 1 : sortBy === "price_desc" ? 2 : 0;
     }
 
-    const response = await tmapiRequest("ali/search/search-items", params);
+    const response = await tmapiRequest("api/ali/search/search-items", params);
 
     // Transform tmapi.top response to our format
     const products: AlibabaProduct[] = (response.data?.items || []).map(
