@@ -435,24 +435,40 @@ export const getTopProducts: RequestHandler = async (req, res) => {
 
     // Transform tmapi.top response to our format
     const products: AlibabaProduct[] = (response.data?.items || []).map(
-      (item: any) => ({
-        id: item.itemId,
-        name: item.title,
-        price: item.minPrice || item.price,
-        originalPrice: item.maxPrice || item.price * 1.2,
-        unit: "piece",
-        images: item.imageList || [item.image],
-        seller: {
-          id: item.supplierId,
-          name: item.supplierName,
-          rating: item.rating || 4.5,
-        },
-        minOrder: item.minOrder || 1,
-        logistics: {
-          deliveryDays: 15,
-          shippingCost: 5,
-        },
-      }),
+      (item: any) => {
+        // Get image URLs
+        const imageList = item.imageList || [item.image] || [];
+
+        // Convert to proxy URLs
+        const proxiedImages = imageList
+          .filter((img: any) => img) // Filter out null/undefined
+          .map((img: string) => {
+            // Only proxy if it's an external URL
+            if (img && typeof img === 'string' && img.startsWith('http')) {
+              return `/api/alibaba/image?url=${encodeURIComponent(img)}`;
+            }
+            return img;
+          });
+
+        return {
+          id: item.itemId,
+          name: item.title,
+          price: item.minPrice || item.price,
+          originalPrice: item.maxPrice || item.price * 1.2,
+          unit: "piece",
+          images: proxiedImages.length > 0 ? proxiedImages : [item.image],
+          seller: {
+            id: item.supplierId,
+            name: item.supplierName,
+            rating: item.rating || 4.5,
+          },
+          minOrder: item.minOrder || 1,
+          logistics: {
+            deliveryDays: 15,
+            shippingCost: 5,
+          },
+        };
+      },
     );
 
     res.json({
