@@ -158,24 +158,29 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
 
     // Transform tmapi.top response to our format
     const products: AlibabaProduct[] = (response.data?.items || []).map(
-      (item: any) => ({
-        id: item.itemId,
-        name: item.title,
-        price: item.minPrice || item.price,
-        originalPrice: item.maxPrice || item.price * 1.2,
-        unit: "piece",
-        images: item.imageList || [item.image],
-        seller: {
-          id: item.supplierId,
-          name: item.supplierName,
-          rating: item.rating || 4.5,
-        },
-        minOrder: item.minOrder || 1,
-        logistics: {
-          deliveryDays: 15,
-          shippingCost: 5,
-        },
-      }),
+      (item: any) => {
+        const imageList = item.imageList || [item.image] || [];
+        const proxiedImages = proxifyImageUrls(imageList);
+
+        return {
+          id: item.itemId,
+          name: item.title,
+          price: item.minPrice || item.price,
+          originalPrice: item.maxPrice || item.price * 1.2,
+          unit: "piece",
+          images: proxiedImages.length > 0 ? proxiedImages : [item.image],
+          seller: {
+            id: item.supplierId,
+            name: item.supplierName,
+            rating: item.rating || 4.5,
+          },
+          minOrder: item.minOrder || 1,
+          logistics: {
+            deliveryDays: 15,
+            shippingCost: 5,
+          },
+        };
+      },
     );
 
     res.json({
