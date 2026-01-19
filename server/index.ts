@@ -27,6 +27,7 @@ export function createServer() {
   app.get("/api/demo", handleDemo);
 
   // Alibaba API routes
+  app.get("/api/alibaba/image", proxyImage);
   app.get("/api/alibaba/top-products", getTopProducts);
   app.post("/api/alibaba/search", searchAlibabaProducts);
   app.get("/api/alibaba/product/:productId", getAlibabaProductDetail);
