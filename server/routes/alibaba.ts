@@ -31,10 +31,22 @@ async function tmapiRequest(
     ...params,
   });
 
-  const response = await fetch(`${TMAPI_BASE_URL}/${endpoint}?${queryParams}`);
+  const url = `${TMAPI_BASE_URL}/${endpoint}?${queryParams}`;
+  console.log(`[TMAPI] Calling: ${endpoint}...`);
+
+  const response = await fetch(url);
 
   if (!response.ok) {
+    const text = await response.text();
+    console.error(`[TMAPI] Error response (${response.status}):`, text.substring(0, 200));
     throw new Error(`tmapi.top API error: ${response.statusText}`);
+  }
+
+  const contentType = response.headers.get("content-type");
+  if (!contentType?.includes("application/json")) {
+    const text = await response.text();
+    console.error(`[TMAPI] Non-JSON response:`, text.substring(0, 200));
+    throw new Error(`Expected JSON response, got ${contentType}`);
   }
 
   const data = await response.json();
