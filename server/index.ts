@@ -6,6 +6,7 @@ import {
   searchAlibabaProducts,
   getAlibabaProductDetail,
   estimateShipping,
+  getTopProducts,
 } from "./routes/alibaba";
 
 export function createServer() {
