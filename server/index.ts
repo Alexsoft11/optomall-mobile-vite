@@ -7,6 +7,7 @@ import {
   getAlibabaProductDetail,
   estimateShipping,
   getTopProducts,
+  proxyImage,
 } from "./routes/alibaba";
 
 export function createServer() {
