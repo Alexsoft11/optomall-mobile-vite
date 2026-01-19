@@ -11,11 +11,12 @@ import { RequestHandler } from "express";
  * API Documentation: https://tmapi.top/docs
  */
 
-// TMAPI API endpoint - note: no /api prefix in the URL path
-const TMAPI_BASE_URL = "https://tmapi.top";
+// TMAPI API endpoint - use api.tmapi.top not tmapi.top
+const TMAPI_BASE_URL = "http://api.tmapi.top";
 // Support both TMAPI_TOKEN and VITE_TMAPI_API_TOKEN environment variables
 const TMAPI_TOKEN = process.env.VITE_TMAPI_API_TOKEN || process.env.TMAPI_TOKEN || "";
 
+console.log("[TMAPI] Base URL:", TMAPI_BASE_URL);
 console.log("[TMAPI] Token configured:", TMAPI_TOKEN ? "✓" : "✗");
 
 // Helper function to make tmapi.top API requests
