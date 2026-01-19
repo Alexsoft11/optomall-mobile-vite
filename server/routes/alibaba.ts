@@ -138,7 +138,7 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
         sortBy === "price_asc" ? 1 : sortBy === "price_desc" ? 2 : 0;
     }
 
-    const response = await tmapiRequest("ali/search/search-items", params);
+    const response = await tmapiRequest("1688/en/search/items", params);
 
     // Transform tmapi.top response to our format
     const products: AlibabaProduct[] = (response.data?.items || []).map(
@@ -194,9 +194,9 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
     // Call tmapi.top API to get item details
     // Reference: https://tmapi.top/docs/ali/item-detail/get-item-detail-by-id
     const response = await tmapiRequest(
-      "ali/item-detail/get-item-detail-by-id",
+      "1688/v2/item_detail",
       {
-        itemId: productId,
+        item_id: productId,
       },
     );
 
@@ -270,8 +270,8 @@ export const estimateShipping: RequestHandler = async (req, res) => {
     try {
       // Try to get shipping info from tmapi.top
       const response = await tmapiRequest(
-        "ali/item-detail/get-item-detail-by-id",
-        { itemId: productId },
+        "1688/v2/item_detail",
+        { item_id: productId },
       );
 
       const item = response.data;
@@ -365,11 +365,11 @@ export const getTopProducts: RequestHandler = async (req, res) => {
     ];
     const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
 
-    const response = await tmapiRequest("ali/search/search-items", {
-      keywords: randomKeyword,
+    const response = await tmapiRequest("1688/en/search/items", {
+      keyword: randomKeyword,
       page: 1,
-      pageSize: 20,
-      sortType: 0, // 0 = relevance (default)
+      page_size: 20,
+      sort: "default"
     });
 
     // Transform tmapi.top response to our format
