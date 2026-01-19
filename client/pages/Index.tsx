@@ -5,12 +5,43 @@ import { useShop } from "@/context/ShopContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { products } from "@/data/products";
 import { useProducts } from "@/hooks/useProducts";
+import { useAlibaba } from "@/hooks/useAlibaba";
+import { useEffect, useState } from "react";
+
+interface AlibabaProductForDisplay {
+  id: string;
+  name: string;
+  price: number;
+  images: string[];
+  seller?: {
+    id: string;
+    name: string;
+    rating: number;
+  };
+  rating?: number;
+}
 
 export default function Index() {
   const navigate = useNavigate();
   const { addToCart, toggleFavorite, isFavorite } = useShop();
   const { convertPrice } = useCurrency();
-  const { items: productsList } = useProducts();
+  const { items: fallbackProducts } = useProducts();
+  const { getTopProducts, loading: apiLoading } = useAlibaba();
+  const [topProducts, setTopProducts] = useState<AlibabaProductForDisplay[]>([]);
+
+  // Load real products from 1688 API on mount
+  useEffect(() => {
+    const loadTopProducts = async () => {
+      const products = await getTopProducts();
+      if (products && products.length > 0) {
+        setTopProducts(products);
+      }
+    };
+    loadTopProducts();
+  }, [getTopProducts]);
+
+  // Use API products if available, otherwise fall back to local products
+  const productsList = topProducts.length > 0 ? topProducts : fallbackProducts;
 
   const featured = productsList.slice(0, 4);
   const latest = productsList.slice(0, 8);
