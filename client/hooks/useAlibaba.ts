@@ -41,6 +41,31 @@ export function useAlibaba() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const getTopProducts = useCallback(
+    async (): Promise<AlibabaProduct[]> => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch("/api/alibaba/top-products");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch top products");
+        }
+
+        const data = await response.json();
+        return data.data || [];
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
+        setError(errorMessage);
+        return [];
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
   const searchProducts = useCallback(
     async (params: SearchParams): Promise<AlibabaProduct[]> => {
       setLoading(true);
