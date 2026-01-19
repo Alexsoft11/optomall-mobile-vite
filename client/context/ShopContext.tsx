@@ -15,11 +15,11 @@ type Product = {
 
 type ShopContextType = {
   cart: Product[];
-  favorites: number[];
+  favorites: (string | number)[];
   addToCart: (p: Product) => void;
-  removeFromCart: (id: number) => void;
-  toggleFavorite: (id: number) => void;
-  isFavorite: (id: number) => boolean;
+  removeFromCart: (id: string | number) => void;
+  toggleFavorite: (id: string | number) => void;
+  isFavorite: (id: string | number) => boolean;
 };
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
