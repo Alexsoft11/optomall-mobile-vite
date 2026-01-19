@@ -29,30 +29,40 @@ async function tmapiRequest(
     );
   }
 
-  const queryParams = new URLSearchParams({
-    token: TMAPI_TOKEN,
-    ...params,
+  // Build URL with token
+  const url = new URL(`${TMAPI_BASE_URL}/${endpoint}`);
+  url.searchParams.set("token", TMAPI_TOKEN);
+
+  // Add other parameters
+  Object.entries(params).forEach(([key, value]) => {
+    url.searchParams.set(key, String(value));
   });
 
-  const url = `${TMAPI_BASE_URL}/${endpoint}?${queryParams}`;
-  console.log(`[TMAPI] Calling: ${url}`);
+  console.log(`[TMAPI] GET ${endpoint} with params:`, Object.keys(params));
 
-  const response = await fetch(url);
+  const response = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      "Accept": "application/json",
+    },
+  });
+
+  const contentType = response.headers.get("content-type");
 
   if (!response.ok) {
     const text = await response.text();
-    console.error(`[TMAPI] Error response (${response.status}):`, text.substring(0, 200));
-    throw new Error(`tmapi.top API error: ${response.statusText}`);
+    console.error(`[TMAPI] Error (${response.status}):`, text.substring(0, 300));
+    throw new Error(`tmapi.top API error: ${response.status} ${response.statusText}`);
   }
 
-  const contentType = response.headers.get("content-type");
   if (!contentType?.includes("application/json")) {
     const text = await response.text();
-    console.error(`[TMAPI] Non-JSON response:`, text.substring(0, 200));
+    console.error(`[TMAPI] Expected JSON, got ${contentType}:`, text.substring(0, 300));
     throw new Error(`Expected JSON response, got ${contentType}`);
   }
 
   const data = await response.json();
+  console.log(`[TMAPI] Success: got ${data.data?.items?.length || 0} items`);
   return data;
 }
 
