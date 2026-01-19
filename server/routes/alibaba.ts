@@ -183,7 +183,7 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
     // Call tmapi.top API to get item details
     // Reference: https://tmapi.top/docs/ali/item-detail/get-item-detail-by-id
     const response = await tmapiRequest(
-      "ali/item-detail/get-item-detail-by-id",
+      "api/ali/item-detail/get-item-detail-by-id",
       {
         itemId: productId,
       },
