@@ -456,19 +456,8 @@ export const getTopProducts: RequestHandler = async (req, res) => {
     // Transform tmapi.top response to our format
     const products: AlibabaProduct[] = (response.data?.items || []).map(
       (item: any) => {
-        // Get image URLs
         const imageList = item.imageList || [item.image] || [];
-
-        // Convert to proxy URLs
-        const proxiedImages = imageList
-          .filter((img: any) => img) // Filter out null/undefined
-          .map((img: string) => {
-            // Only proxy if it's an external URL
-            if (img && typeof img === 'string' && img.startsWith('http')) {
-              return `/api/alibaba/image?url=${encodeURIComponent(img)}`;
-            }
-            return img;
-          });
+        const proxiedImages = proxifyImageUrls(imageList);
 
         return {
           id: item.itemId,
