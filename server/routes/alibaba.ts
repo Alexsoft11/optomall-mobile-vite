@@ -30,9 +30,9 @@ async function tmapiRequest(
     );
   }
 
-  // Build URL with token
+  // Build URL with API token (TMAPI uses 'apiToken' not 'token')
   const url = new URL(`${TMAPI_BASE_URL}/${endpoint}`);
-  url.searchParams.set("token", TMAPI_TOKEN);
+  url.searchParams.set("apiToken", TMAPI_TOKEN);
 
   // Add other parameters
   Object.entries(params).forEach(([key, value]) => {
