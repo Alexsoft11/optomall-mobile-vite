@@ -351,6 +351,66 @@ export const estimateShipping: RequestHandler = async (req, res) => {
 };
 
 /**
+ * Proxy image from 1688 to avoid CORS issues
+ *
+ * Usage: GET /api/alibaba/image?url={encoded_image_url}
+ */
+export const proxyImage: RequestHandler = async (req, res) => {
+  try {
+    const imageUrl = req.query.url as string;
+
+    if (!imageUrl) {
+      return res.status(400).json({ error: "Image URL is required" });
+    }
+
+    // Decode URL if it's encoded
+    let decodedUrl = imageUrl;
+    try {
+      decodedUrl = decodeURIComponent(imageUrl);
+    } catch {
+      decodedUrl = imageUrl;
+    }
+
+    // Validate it's a valid image URL
+    if (!decodedUrl.startsWith("http") ||
+        !decodedUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i)) {
+      return res.status(400).json({ error: "Invalid image URL" });
+    }
+
+    console.log(`[IMAGE] Proxying: ${decodedUrl.substring(0, 100)}...`);
+
+    // Fetch image with timeout
+    const imageResponse = await fetch(decodedUrl, {
+      timeout: 10000,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      },
+    });
+
+    if (!imageResponse.ok) {
+      console.error(`[IMAGE] Failed to fetch: ${imageResponse.statusText}`);
+      return res.status(imageResponse.status).json({ error: "Failed to fetch image" });
+    }
+
+    // Set proper headers for image response
+    const contentType = imageResponse.headers.get("content-type") || "image/jpeg";
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Cache-Control", "public, max-age=86400"); // 24 hours
+    res.setHeader("Access-Control-Allow-Origin", "*");
+
+    // Stream image to response
+    const buffer = await imageResponse.arrayBuffer();
+    res.send(Buffer.from(buffer));
+  } catch (error) {
+    console.error("[IMAGE] Error:", error);
+    res.status(500).json({
+      error: "Failed to proxy image",
+      details: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+
+/**
  * Get top 20 products from 1688 (for homepage)
  *
  * Usage: GET /api/alibaba/top-products
