@@ -321,3 +321,61 @@ export const estimateShipping: RequestHandler = async (req, res) => {
     });
   }
 };
+
+/**
+ * Get top 20 products from 1688 (for homepage)
+ *
+ * Usage: GET /api/alibaba/top-products
+ */
+export const getTopProducts: RequestHandler = async (req, res) => {
+  try {
+    // Search for popular products with high ratings
+    // We'll search for generic popular categories and get the top results
+    const keywords = [
+      "wholesale electronics",
+      "popular gadgets",
+      "best sellers",
+    ];
+    const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
+
+    const response = await tmapiRequest("ali/search/search-items", {
+      keywords: randomKeyword,
+      page: 1,
+      pageSize: 20,
+      sortType: 0, // 0 = relevance (default)
+    });
+
+    // Transform tmapi.top response to our format
+    const products: AlibabaProduct[] = (response.data?.items || []).map(
+      (item: any) => ({
+        id: item.itemId,
+        name: item.title,
+        price: item.minPrice || item.price,
+        originalPrice: item.maxPrice || item.price * 1.2,
+        unit: "piece",
+        images: item.imageList || [item.image],
+        seller: {
+          id: item.supplierId,
+          name: item.supplierName,
+          rating: item.rating || 4.5,
+        },
+        minOrder: item.minOrder || 1,
+        logistics: {
+          deliveryDays: 15,
+          shippingCost: 5,
+        },
+      }),
+    );
+
+    res.json({
+      success: true,
+      data: products.slice(0, 20), // Ensure exactly 20 products
+    });
+  } catch (error) {
+    console.error("Top products error:", error);
+    res.status(500).json({
+      error: "Failed to fetch top products",
+      details: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
