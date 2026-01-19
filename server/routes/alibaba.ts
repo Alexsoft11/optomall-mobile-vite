@@ -354,7 +354,7 @@ export const getTopProducts: RequestHandler = async (req, res) => {
     ];
     const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
 
-    const response = await tmapiRequest("ali/search/search-items", {
+    const response = await tmapiRequest("api/ali/search/search-items", {
       keywords: randomKeyword,
       page: 1,
       pageSize: 20,
