@@ -259,7 +259,7 @@ export const estimateShipping: RequestHandler = async (req, res) => {
     try {
       // Try to get shipping info from tmapi.top
       const response = await tmapiRequest(
-        "ali/item-detail/get-item-detail-by-id",
+        "api/ali/item-detail/get-item-detail-by-id",
         { itemId: productId },
       );
 
