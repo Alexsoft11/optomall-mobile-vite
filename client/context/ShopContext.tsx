@@ -8,7 +8,7 @@ import React, {
 import { supabase } from "@/lib/supabase";
 
 type Product = {
-  id: number;
+  id: string | number;
   name: string;
   price: number;
 };
