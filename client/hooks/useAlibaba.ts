@@ -158,6 +158,7 @@ export function useAlibaba() {
   );
 
   return {
+    getTopProducts,
     searchProducts,
     getProductDetail,
     estimateShipping,
