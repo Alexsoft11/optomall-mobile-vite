@@ -106,6 +106,10 @@ async function tmapiRequest(
 
   const data = await response.json();
   console.log(`[TMAPI] Success: got ${data.data?.items?.length || 0} items`);
+
+  // ALWAYS LOG RAW DATA FOR DEBUGGING
+  console.log(`[TMAPI] RAW RESPONSE (first 1000 chars):`, JSON.stringify(data).substring(0, 1000));
+
   return data;
 }
 
@@ -197,19 +201,24 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
     // Transform tmapi.top response to our format
     const products: AlibabaProduct[] = (response.data?.items || []).map(
       (item: any) => {
-        const imageList = item.imageList || (item.image ? [item.image] : []);
+        // Debug logging for item structure
+        console.log(`[TMAPI] Item structure keys: ${Object.keys(item).join(', ')}`);
+
+        const productId = item.itemId || item.item_id || item.offerId || item.productId || item.id;
+        const mainImage = item.image || item.picUrl || item.pic_url || item.mainImage || item.imgUrl || item.img || item.thumb;
+        const imageList = item.imageList || item.images || (mainImage ? [mainImage] : []);
         const proxiedImages = proxifyImageUrls(imageList);
 
         return {
-          id: String(item.itemId),
-          name: item.title,
-          price: item.minPrice || item.price,
+          id: String(productId),
+          name: item.title || item.subject || item.name,
+          price: item.minPrice || item.price || item.promotionPrice || item.memberPrice,
           originalPrice: item.maxPrice || item.price * 1.2,
           unit: "piece",
           images: proxiedImages,
           seller: {
-            id: String(item.supplierId),
-            name: item.supplierName,
+            id: String(item.supplierId || item.userId || item.sellerId),
+            name: item.supplierName || item.sellerName || item.companyName,
             rating: item.rating || 4.5,
           },
           minOrder: item.minOrder || 1,
@@ -282,16 +291,20 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
     }
 
     // Transform tmapi.top response to our format
+    const actualProductId = item.itemId || item.item_id || item.offerId || item.productId || item.id;
+    const mainImage = item.image || item.picUrl || item.pic_url || item.mainImage || item.imgUrl || item.img || item.thumb;
+    const imageList = item.imageList || item.images || [mainImage];
+
     const product = {
-      id: String(item.itemId),
-      name: item.title,
-      price: item.minPrice || item.price,
+      id: String(actualProductId),
+      name: item.title || item.subject || item.name,
+      price: item.minPrice || item.price || item.promotionPrice || item.memberPrice,
       originalPrice: item.maxPrice || item.price * 1.2,
       unit: item.unit || "piece",
-      images: proxifyImageUrls([item.image, ...(item.imageList || [])]),
+      images: proxifyImageUrls(imageList),
       seller: {
-        id: String(item.supplierId),
-        name: item.supplierName,
+        id: String(item.supplierId || item.userId || item.sellerId || item.shopId),
+        name: item.supplierName || item.sellerName || item.companyName || item.shopName,
         rating: item.rating || 4.5,
       },
       minOrder: item.minOrder || 1,
@@ -299,7 +312,7 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
         deliveryDays: 15,
         shippingCost: 5,
       },
-      description: item.description || item.title,
+      description: item.description || item.title || item.subject,
       specifications: {
         category: item.category || "N/A",
         weight: item.weight || "N/A",
@@ -437,6 +450,7 @@ export const proxyImage: RequestHandler = async (req, res) => {
     const imageUrl = req.query.url as string;
 
     if (!imageUrl) {
+      console.warn("[IMAGE] Missing URL in proxy request");
       return res.status(400).json({ error: "Image URL is required" });
     }
 
@@ -448,13 +462,15 @@ export const proxyImage: RequestHandler = async (req, res) => {
       decodedUrl = imageUrl;
     }
 
+    console.log(`[IMAGE] Requesting proxy for: ${decodedUrl}`);
+
     // Validate it's a valid image URL
     if (!decodedUrl.startsWith("http")) {
       console.warn(`[IMAGE] Rejecting invalid proxy URL: ${decodedUrl}`);
       return res.status(400).json({ error: "Invalid image URL" });
     }
 
-    console.log(`[IMAGE] Proxying: ${decodedUrl.substring(0, 100)}...`);
+    console.log(`[IMAGE] Fetching from upstream: ${decodedUrl.substring(0, 100)}...`);
 
     // Fetch image with timeout and bypass some security checks that might block us
     const imageResponse = await fetch(decodedUrl, {
@@ -509,10 +525,13 @@ export const getTopProducts: RequestHandler = async (req, res) => {
 
     const cacheKey = `top_products_${randomKeyword}`;
     const cachedResponse = getCachedData(cacheKey, 60 * 60 * 1000); // 1 hour cache for homepage
+    // Temporarily disable cache hit to see logs
+    /*
     if (cachedResponse) {
       console.log(`[CACHE] Hit for top products: ${randomKeyword}`);
       return res.json(cachedResponse);
     }
+    */
 
     const response = await tmapiRequest("1688/en/search/items", {
       keyword: randomKeyword,
@@ -524,19 +543,24 @@ export const getTopProducts: RequestHandler = async (req, res) => {
     // Transform tmapi.top response to our format
     const products: AlibabaProduct[] = (response.data?.items || []).map(
       (item: any) => {
-        const imageList = item.imageList || (item.image ? [item.image] : []);
+        // Debug logging for item structure
+        console.log(`[TMAPI] Item structure keys: ${Object.keys(item).join(', ')}`);
+
+        const productId = item.itemId || item.item_id || item.offerId || item.productId || item.id;
+        const mainImage = item.image || item.picUrl || item.pic_url || item.mainImage || item.imgUrl || item.img || item.thumb;
+        const imageList = item.imageList || item.images || (mainImage ? [mainImage] : []);
         const proxiedImages = proxifyImageUrls(imageList);
 
         return {
-          id: String(item.itemId),
-          name: item.title,
-          price: item.minPrice || item.price,
+          id: String(productId),
+          name: item.title || item.subject || item.name,
+          price: item.minPrice || item.price || item.promotionPrice || item.memberPrice,
           originalPrice: item.maxPrice || item.price * 1.2,
           unit: "piece",
           images: proxiedImages,
           seller: {
-            id: String(item.supplierId),
-            name: item.supplierName,
+            id: String(item.supplierId || item.userId || item.sellerId),
+            name: item.supplierName || item.sellerName || item.companyName,
             rating: item.rating || 4.5,
           },
           minOrder: item.minOrder || 1,

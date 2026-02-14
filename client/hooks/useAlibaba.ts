@@ -45,16 +45,20 @@ export function useAlibaba() {
     async (): Promise<AlibabaProduct[]> => {
       setLoading(true);
       setError(null);
+      console.log("[useAlibaba] Fetching top products...");
       try {
         const response = await fetch("/api/alibaba/top-products");
 
         if (!response.ok) {
+          console.error("[useAlibaba] Fetch failed:", response.status, response.statusText);
           throw new Error("Failed to fetch top products");
         }
 
         const data = await response.json();
+        console.log("[useAlibaba] Got top products:", data.data?.length);
         return data.data || [];
       } catch (err) {
+        console.error("[useAlibaba] Error:", err);
         const errorMessage =
           err instanceof Error ? err.message : "Unknown error";
         setError(errorMessage);
