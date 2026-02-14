@@ -1,18 +1,23 @@
 import GlassCard from "@/components/GlassCard";
-import { ShoppingCart, Heart, X } from "lucide-react";
+import { ShoppingCart, Heart, X, Loader2 } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
 import { useCurrency } from "@/context/CurrencyContext";
-import { products } from "@/data/products";
+import { products as fallbackProducts } from "@/data/products";
 import { useProducts } from "@/hooks/useProducts";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useAlibaba } from "@/hooks/useAlibaba";
 
 export default function Marketplace() {
   const navigate = useNavigate();
   const { addToCart, toggleFavorite, isFavorite } = useShop();
   const { convertPrice } = useCurrency();
-  const { items } = useProducts();
+  const { items: supabaseItems } = useProducts();
+  const { searchProducts, getTopProducts, loading: apiLoading } = useAlibaba();
+
   const [searchParams, setSearchParams] = useSearchParams();
+  const [apiProducts, setApiProducts] = useState<any[]>([]);
+
   const [selectedCategory, setSelectedCategory] = useState(
     searchParams.get("category") || "",
   );
@@ -20,7 +25,7 @@ export default function Marketplace() {
     searchParams.get("search") || "",
   );
   const [sortBy, setSortBy] = useState("newest");
-  const [priceRange, setPriceRange] = useState([0, 50]);
+  const [priceRange, setPriceRange] = useState([0, 1000]); // Increased range for real products
 
   const categories = [
     { id: "electronics", label: "Electronics", icon: "⚡" },
@@ -29,27 +34,60 @@ export default function Marketplace() {
     { id: "sports", label: "Sports", icon: "⚽" },
   ];
 
+  // Load products from Alibaba API
+  useEffect(() => {
+    const loadApiProducts = async () => {
+      let results = [];
+
+      if (searchQuery || selectedCategory) {
+        // Search by keyword or category
+        const keyword = searchQuery || selectedCategory || "popular";
+        results = await searchProducts({
+          keyword,
+          pageSize: 24,
+          sortBy: sortBy === "price-low" ? "price_asc" : sortBy === "price-high" ? "price_desc" : "relevance"
+        } as any);
+      } else {
+        // Just get top products for general view
+        results = await getTopProducts();
+      }
+
+      if (results && results.length > 0) {
+        setApiProducts(results);
+      }
+    };
+
+    loadApiProducts();
+  }, [searchQuery, selectedCategory, sortBy, searchProducts, getTopProducts]);
+
   const productsList = useMemo(() => {
-    let filtered = items.length > 0 ? items : products;
+    // Combine API products with local ones, preferring API
+    let combined = apiProducts.length > 0 ? apiProducts : [...supabaseItems, ...fallbackProducts];
 
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (p) =>
-          p.name.toLowerCase().includes(query) ||
-          p.description.toLowerCase().includes(query),
-      );
-    }
+    // Frontend filtering for price range and local search if API didn't return anything
+    let filtered = combined;
 
-    if (selectedCategory) {
-      filtered = filtered.filter((p) => p.category === selectedCategory);
+    if (apiProducts.length === 0) {
+      // Only do heavy frontend filtering if we're using mock data
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        filtered = filtered.filter(
+          (p) =>
+            p.name.toLowerCase().includes(query) ||
+            p.description?.toLowerCase().includes(query),
+        );
+      }
+
+      if (selectedCategory) {
+        filtered = filtered.filter((p) => p.category === selectedCategory);
+      }
     }
 
     filtered = filtered.filter(
       (p) => p.price >= priceRange[0] && p.price <= priceRange[1],
     );
 
+    // Sorting (API already sorts, but we do it again for consistency or local data)
     let sorted = [...filtered];
     switch (sortBy) {
       case "price-low":
@@ -66,12 +104,12 @@ export default function Marketplace() {
         break;
       case "newest":
       default:
-        sorted.reverse();
+        // Keep as is if API or newest
         break;
     }
 
     return sorted;
-  }, [selectedCategory, sortBy, priceRange, items, searchQuery]);
+  }, [apiProducts, supabaseItems, fallbackProducts, selectedCategory, sortBy, priceRange, searchQuery]);
 
   const handleCategoryToggle = (catId: string) => {
     if (selectedCategory === catId) {
@@ -164,14 +202,14 @@ export default function Marketplace() {
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium">Price range:</label>
           <span className="text-sm text-foreground/70">
-            ${priceRange[0]} - ${priceRange[1]}
+            {convertPrice(priceRange[0])} - {convertPrice(priceRange[1])}
           </span>
         </div>
         <input
           type="range"
           min="0"
-          max="100"
-          step="5"
+          max="5000"
+          step="50"
           value={priceRange[1]}
           onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
           className="w-full h-2 bg-white/70 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
@@ -179,7 +217,12 @@ export default function Marketplace() {
       </div>
 
       {/* Products Grid */}
-      {productsList.length === 0 ? (
+      {apiLoading && apiProducts.length === 0 ? (
+        <div className="py-20 flex flex-col items-center justify-center gap-4">
+          <Loader2 className="size-10 text-primary animate-spin" />
+          <p className="text-foreground/70">Searching 1688 marketplace...</p>
+        </div>
+      ) : productsList.length === 0 ? (
         <div className="py-12 text-center">
           <p className="text-foreground/70">No products found</p>
           <button

@@ -249,6 +249,12 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: "productId is required" });
     }
 
+    // TMAPI expects numeric item_id. If it's not numeric, it's likely a mock product.
+    if (!/^\d+$/.test(productId)) {
+      console.log(`[TMAPI] Skipping detail fetch for non-numeric ID: ${productId}`);
+      return res.status(404).json({ error: "Product not found in 1688 (non-numeric ID)" });
+    }
+
     const cacheKey = `detail_${productId}`;
     const cachedResponse = getCachedData(cacheKey, CACHE_TTL_DETAIL);
     if (cachedResponse) {
