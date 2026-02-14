@@ -43,17 +43,17 @@ function proxifyImageUrls(images: any[]): string[] {
   return images
     .filter((img: any) => img) // Filter out null/undefined
     .map((img: string) => {
-      // Handle protocol-relative URLs
+      // Handle protocol-relative URLs (common in Alibaba/1688)
       let finalImg = img;
-      if (typeof img === 'string' && img.startsWith("//")) {
+      if (typeof img === "string" && img.startsWith("//")) {
         finalImg = "https:" + img;
       }
 
-      // Only proxy if it's an external URL
+      // Ensure URL is absolute before proxying
       if (
         finalImg &&
         typeof finalImg === "string" &&
-        (finalImg.startsWith("http") || finalImg.startsWith("https"))
+        finalImg.startsWith("http")
       ) {
         return `/api/alibaba/image?url=${encodeURIComponent(finalImg)}`;
       }
@@ -201,14 +201,14 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
         const proxiedImages = proxifyImageUrls(imageList);
 
         return {
-          id: item.itemId,
+          id: String(item.itemId),
           name: item.title,
           price: item.minPrice || item.price,
           originalPrice: item.maxPrice || item.price * 1.2,
           unit: "piece",
           images: proxiedImages,
           seller: {
-            id: item.supplierId,
+            id: String(item.supplierId),
             name: item.supplierName,
             rating: item.rating || 4.5,
           },
@@ -283,14 +283,14 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
 
     // Transform tmapi.top response to our format
     const product = {
-      id: item.itemId,
+      id: String(item.itemId),
       name: item.title,
       price: item.minPrice || item.price,
       originalPrice: item.maxPrice || item.price * 1.2,
       unit: item.unit || "piece",
       images: proxifyImageUrls([item.image, ...(item.imageList || [])]),
       seller: {
-        id: item.supplierId,
+        id: String(item.supplierId),
         name: item.supplierName,
         rating: item.rating || 4.5,
       },
@@ -449,31 +449,35 @@ export const proxyImage: RequestHandler = async (req, res) => {
     }
 
     // Validate it's a valid image URL
-    if (!decodedUrl.startsWith("http") ||
-        !decodedUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i)) {
+    if (!decodedUrl.startsWith("http")) {
+      console.warn(`[IMAGE] Rejecting invalid proxy URL: ${decodedUrl}`);
       return res.status(400).json({ error: "Invalid image URL" });
     }
 
     console.log(`[IMAGE] Proxying: ${decodedUrl.substring(0, 100)}...`);
 
-    // Fetch image with timeout
+    // Fetch image with timeout and bypass some security checks that might block us
     const imageResponse = await fetch(decodedUrl, {
-      timeout: 10000,
+      timeout: 15000,
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        "Referer": "https://www.1688.com/",
+        "Cache-Control": "no-cache"
       },
     });
 
     if (!imageResponse.ok) {
-      console.error(`[IMAGE] Failed to fetch: ${imageResponse.statusText}`);
+      console.error(`[IMAGE] Failed to fetch (${imageResponse.status}): ${imageResponse.statusText} from ${decodedUrl}`);
       return res.status(imageResponse.status).json({ error: "Failed to fetch image" });
     }
 
     // Set proper headers for image response
     const contentType = imageResponse.headers.get("content-type") || "image/jpeg";
     res.setHeader("Content-Type", contentType);
-    res.setHeader("Cache-Control", "public, max-age=86400"); // 24 hours
+    res.setHeader("Cache-Control", "public, max-age=604800"); // 1 week
     res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("X-Content-Type-Options", "nosniff");
 
     // Stream image to response
     const buffer = await imageResponse.arrayBuffer();
@@ -524,14 +528,14 @@ export const getTopProducts: RequestHandler = async (req, res) => {
         const proxiedImages = proxifyImageUrls(imageList);
 
         return {
-          id: item.itemId,
+          id: String(item.itemId),
           name: item.title,
           price: item.minPrice || item.price,
           originalPrice: item.maxPrice || item.price * 1.2,
           unit: "piece",
           images: proxiedImages,
           seller: {
-            id: item.supplierId,
+            id: String(item.supplierId),
             name: item.supplierName,
             rating: item.rating || 4.5,
           },

@@ -24,6 +24,7 @@ export default function ProductDetail() {
   const { getProductDetail, loading: apiLoading } = useAlibaba();
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
@@ -32,9 +33,13 @@ export default function ProductDetail() {
       if (!id) return;
 
       setLoading(true);
-      // First try to find in local products (if id is numeric)
+      setError(null);
+
+      console.log(`[PRODUCT_DETAIL] Loading ID: ${id}`);
+
+      // First try to find in local products (if id is numeric and small)
       const localId = parseInt(id);
-      if (!isNaN(localId)) {
+      if (!isNaN(localId) && localId < 1000) {
         const localProduct = fallbackProducts.find((p) => p.id === localId);
         if (localProduct) {
           setProduct(localProduct);
@@ -43,12 +48,20 @@ export default function ProductDetail() {
         }
       }
 
-      // If not found or not numeric, fetch from Alibaba API
-      const apiProduct = await getProductDetail(id);
-      if (apiProduct) {
-        setProduct(apiProduct);
+      // If not found or not local numeric, fetch from Alibaba API
+      try {
+        const apiProduct = await getProductDetail(id);
+        if (apiProduct) {
+          setProduct(apiProduct);
+        } else {
+          setError("Product not found");
+        }
+      } catch (err) {
+        console.error("Detail fetch error:", err);
+        setError("Failed to load product from 1688");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     loadProduct();
@@ -58,18 +71,21 @@ export default function ProductDetail() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-4 text-center">
         <Loader2 className="size-10 text-primary animate-spin" />
-        <p className="text-foreground/70">Loading product details...</p>
+        <p className="text-foreground/70">Loading product details from China...</p>
       </div>
     );
   }
 
-  if (!product) {
+  if (error || !product) {
     return (
-      <div className="px-4 py-8 text-center">
-        <h1 className="text-2xl font-semibold mb-4">Product not found</h1>
+      <div className="px-4 py-8 text-center flex flex-col items-center justify-center min-h-[50vh] gap-4">
+        <h1 className="text-2xl font-semibold mb-2">{error || "Product not found"}</h1>
+        <p className="text-foreground/60 mb-4 max-w-xs">
+          We couldn't find the product you're looking for. It might have been removed or the ID is invalid.
+        </p>
         <button
           onClick={() => navigate("/marketplace")}
-          className="text-primary hover:text-primary/80"
+          className="h-11 px-8 rounded-xl bg-primary text-primary-foreground font-medium shadow-lg hover:opacity-90 transition"
         >
           Back to marketplace
         </button>
