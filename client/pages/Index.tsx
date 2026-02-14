@@ -101,7 +101,7 @@ export default function Index() {
           </h2>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          {categories.map((cat, idx) => (
+          {categories.map((cat) => (
             <RouterLink
               key={cat.id}
               to={`/marketplace?category=${cat.id}`}
@@ -140,9 +140,9 @@ export default function Index() {
           </RouterLink>
         </div>
         <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2">
-          {featured.map((p) => (
+          {featured.map((p, idx) => (
             <div
-              key={p.id}
+              key={p.id ? `featured-${p.id}-${idx}` : `featured-idx-${idx}`}
               onClick={() => navigate(`/product/${p.id}`)}
               className="min-w-[200px] snap-start cursor-pointer"
             >
@@ -222,9 +222,9 @@ export default function Index() {
           </RouterLink>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          {latest.map((p) => (
+          {latest.map((p, idx) => (
             <div
-              key={p.id}
+              key={p.id ? `latest-${p.id}-${idx}` : `latest-idx-${idx}`}
               onClick={() => navigate(`/product/${p.id}`)}
               className="cursor-pointer"
             >

@@ -19,6 +19,23 @@ const TMAPI_TOKEN = process.env.VITE_TMAPI_API_TOKEN || process.env.TMAPI_TOKEN 
 console.log("[TMAPI] Base URL:", TMAPI_BASE_URL);
 console.log("[TMAPI] Token configured:", TMAPI_TOKEN ? "✓" : "✗");
 
+// Simple in-memory cache
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL_DETAIL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL_SEARCH = Infinity; // No time limit for search per requirements
+
+function getCachedData(key: string, ttl: number) {
+  const cached = cache.get(key);
+  if (cached && (ttl === Infinity || Date.now() - cached.timestamp < ttl)) {
+    return cached.data;
+  }
+  return null;
+}
+
+function setCachedData(key: string, data: any) {
+  cache.set(key, { data, timestamp: Date.now() });
+}
+
 // Helper function to convert image URLs to proxy URLs
 function proxifyImageUrls(images: any[]): string[] {
   if (!images) return [];
@@ -26,11 +43,21 @@ function proxifyImageUrls(images: any[]): string[] {
   return images
     .filter((img: any) => img) // Filter out null/undefined
     .map((img: string) => {
-      // Only proxy if it's an external URL
-      if (img && typeof img === 'string' && img.startsWith('http')) {
-        return `/api/alibaba/image?url=${encodeURIComponent(img)}`;
+      // Handle protocol-relative URLs
+      let finalImg = img;
+      if (typeof img === 'string' && img.startsWith("//")) {
+        finalImg = "https:" + img;
       }
-      return img;
+
+      // Only proxy if it's an external URL
+      if (
+        finalImg &&
+        typeof finalImg === "string" &&
+        (finalImg.startsWith("http") || finalImg.startsWith("https"))
+      ) {
+        return `/api/alibaba/image?url=${encodeURIComponent(finalImg)}`;
+      }
+      return finalImg;
     });
 }
 
@@ -154,12 +181,19 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
       params.sort = "default";
     }
 
+    const cacheKey = `search_${JSON.stringify(params)}`;
+    const cachedResponse = getCachedData(cacheKey, CACHE_TTL_SEARCH);
+    if (cachedResponse) {
+      console.log(`[CACHE] Hit for search: ${keyword}`);
+      return res.json(cachedResponse);
+    }
+
     const response = await tmapiRequest("1688/en/search/items", params);
 
     // Transform tmapi.top response to our format
     const products: AlibabaProduct[] = (response.data?.items || []).map(
       (item: any) => {
-        const imageList = item.imageList || [item.image] || [];
+        const imageList = item.imageList || (item.image ? [item.image] : []);
         const proxiedImages = proxifyImageUrls(imageList);
 
         return {
@@ -168,7 +202,7 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
           price: item.minPrice || item.price,
           originalPrice: item.maxPrice || item.price * 1.2,
           unit: "piece",
-          images: proxiedImages.length > 0 ? proxiedImages : [item.image],
+          images: proxiedImages,
           seller: {
             id: item.supplierId,
             name: item.supplierName,
@@ -183,13 +217,16 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
       },
     );
 
-    res.json({
+    const result = {
       success: true,
       data: products,
       total: response.data?.totalCount || 0,
       pageNo,
       pageSize,
-    });
+    };
+
+    setCachedData(cacheKey, result);
+    res.json(result);
   } catch (error) {
     console.error("1688 search error:", error);
     res.status(500).json({
@@ -210,6 +247,13 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
 
     if (!productId) {
       return res.status(400).json({ error: "productId is required" });
+    }
+
+    const cacheKey = `detail_${productId}`;
+    const cachedResponse = getCachedData(cacheKey, CACHE_TTL_DETAIL);
+    if (cachedResponse) {
+      console.log(`[CACHE] Hit for detail: ${productId}`);
+      return res.json(cachedResponse);
     }
 
     // Call tmapi.top API to get item details
@@ -234,7 +278,7 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
       price: item.minPrice || item.price,
       originalPrice: item.maxPrice || item.price * 1.2,
       unit: item.unit || "piece",
-      images: [item.image, ...(item.imageList || [])],
+      images: proxifyImageUrls([item.image, ...(item.imageList || [])]),
       seller: {
         id: item.supplierId,
         name: item.supplierName,
@@ -255,10 +299,13 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
       },
     };
 
-    res.json({
+    const result = {
       success: true,
       data: product,
-    });
+    };
+
+    setCachedData(cacheKey, result);
+    res.json(result);
   } catch (error) {
     console.error("1688 product detail error:", error);
     res.status(500).json({
@@ -446,6 +493,13 @@ export const getTopProducts: RequestHandler = async (req, res) => {
     ];
     const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
 
+    const cacheKey = `top_products_${randomKeyword}`;
+    const cachedResponse = getCachedData(cacheKey, 60 * 60 * 1000); // 1 hour cache for homepage
+    if (cachedResponse) {
+      console.log(`[CACHE] Hit for top products: ${randomKeyword}`);
+      return res.json(cachedResponse);
+    }
+
     const response = await tmapiRequest("1688/en/search/items", {
       keyword: randomKeyword,
       page: 1,
@@ -456,7 +510,7 @@ export const getTopProducts: RequestHandler = async (req, res) => {
     // Transform tmapi.top response to our format
     const products: AlibabaProduct[] = (response.data?.items || []).map(
       (item: any) => {
-        const imageList = item.imageList || [item.image] || [];
+        const imageList = item.imageList || (item.image ? [item.image] : []);
         const proxiedImages = proxifyImageUrls(imageList);
 
         return {
@@ -465,7 +519,7 @@ export const getTopProducts: RequestHandler = async (req, res) => {
           price: item.minPrice || item.price,
           originalPrice: item.maxPrice || item.price * 1.2,
           unit: "piece",
-          images: proxiedImages.length > 0 ? proxiedImages : [item.image],
+          images: proxiedImages,
           seller: {
             id: item.supplierId,
             name: item.supplierName,
@@ -480,10 +534,13 @@ export const getTopProducts: RequestHandler = async (req, res) => {
       },
     );
 
-    res.json({
+    const result = {
       success: true,
       data: products.slice(0, 20), // Ensure exactly 20 products
-    });
+    };
+
+    setCachedData(cacheKey, result);
+    res.json(result);
   } catch (error) {
     console.error("Top products error:", error);
     res.status(500).json({

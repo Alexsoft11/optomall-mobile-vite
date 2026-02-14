@@ -197,9 +197,9 @@ export default function Marketplace() {
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">
-          {productsList.map((p) => (
+          {productsList.map((p, idx) => (
             <div
-              key={p.id}
+              key={p.id ? `marketplace-${p.id}-${idx}` : `marketplace-idx-${idx}`}
               onClick={() => navigate(`/product/${p.id}`)}
               className="cursor-pointer"
             >

@@ -8,21 +8,60 @@ import {
   Share2,
   Plus,
   Minus,
+  Loader2,
 } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
 import { useCurrency } from "@/context/CurrencyContext";
-import { products } from "@/data/products";
-import { useState } from "react";
+import { products as fallbackProducts } from "@/data/products";
+import { useState, useEffect } from "react";
+import { useAlibaba } from "@/hooks/useAlibaba";
 
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart, toggleFavorite, isFavorite } = useShop();
   const { convertPrice } = useCurrency();
+  const { getProductDetail, loading: apiLoading } = useAlibaba();
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  const product = products.find((p) => p.id === parseInt(id || ""));
+  useEffect(() => {
+    const loadProduct = async () => {
+      if (!id) return;
+
+      setLoading(true);
+      // First try to find in local products (if id is numeric)
+      const localId = parseInt(id);
+      if (!isNaN(localId)) {
+        const localProduct = fallbackProducts.find((p) => p.id === localId);
+        if (localProduct) {
+          setProduct(localProduct);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // If not found or not numeric, fetch from Alibaba API
+      const apiProduct = await getProductDetail(id);
+      if (apiProduct) {
+        setProduct(apiProduct);
+      }
+      setLoading(false);
+    };
+
+    loadProduct();
+  }, [id, getProductDetail]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-4 text-center">
+        <Loader2 className="size-10 text-primary animate-spin" />
+        <p className="text-foreground/70">Loading product details...</p>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -78,7 +117,11 @@ export default function ProductDetail() {
     },
   ];
 
-  const avgRating = (product.rating || 4.5).toFixed(1);
+  const sellerName = typeof product.seller === 'string'
+    ? product.seller
+    : (product.seller?.name || "ChinaMall Store");
+
+  const avgRating = (product.rating || 4.5);
   const totalReviews = product.reviews || 234;
 
   return (
@@ -101,7 +144,7 @@ export default function ProductDetail() {
             <img
               src={product.images[selectedImageIndex]}
               alt={product.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain bg-white/50"
             />
           )}
           <button
@@ -121,12 +164,12 @@ export default function ProductDetail() {
           </button>
         </div>
         {product.images && product.images.length > 1 && (
-          <div className="p-3 flex gap-2 border-t border-white/10">
-            {product.images.map((img, idx) => (
+          <div className="p-3 flex gap-2 border-t border-white/10 overflow-x-auto">
+            {product.images.map((img: string, idx: number) => (
               <button
                 key={idx}
                 onClick={() => setSelectedImageIndex(idx)}
-                className={`size-16 rounded-lg overflow-hidden border-2 transition ${
+                className={`min-w-16 size-16 rounded-lg overflow-hidden border-2 transition flex-shrink-0 ${
                   selectedImageIndex === idx
                     ? "border-primary"
                     : "border-white/20"
@@ -144,13 +187,18 @@ export default function ProductDetail() {
         <div>
           <div className="flex items-center gap-2 mb-2">
             <span className="text-xs px-2 py-1 rounded-full bg-accent/20 text-accent capitalize font-medium">
-              {product.category}
+              {product.category || (product.specifications?.category) || "Electronics"}
             </span>
+            {product.minOrder && (
+              <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">
+                Min. Order: {product.minOrder} {product.unit || "piece"}
+              </span>
+            )}
           </div>
           <h2 className="text-xl font-semibold">{product.name}</h2>
-          <p className="text-sm text-foreground/70 mt-2">
+          <div className="text-sm text-foreground/70 mt-2 line-clamp-3 overflow-hidden transition-all duration-300">
             {product.description}
-          </p>
+          </div>
         </div>
 
         {/* Rating */}
@@ -159,9 +207,11 @@ export default function ProductDetail() {
             <div>
               <div className="flex items-center gap-1 mb-1">
                 <div className="flex text-lg text-amber-500">
-                  {"★".repeat(Math.floor(product.rating || 0))}
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <span key={i}>{i < Math.floor(avgRating) ? "★" : "☆"}</span>
+                  ))}
                 </div>
-                <span className="text-lg font-semibold ml-1">{avgRating}</span>
+                <span className="text-lg font-semibold ml-1">{typeof avgRating === 'number' ? avgRating.toFixed(1) : avgRating}</span>
               </div>
               <p className="text-xs text-foreground/70">
                 Based on {totalReviews.toLocaleString()} reviews
@@ -177,16 +227,21 @@ export default function ProductDetail() {
             <div className="text-3xl font-bold text-primary">
               {convertPrice(product.price)}
             </div>
+            {product.originalPrice && product.originalPrice > product.price && (
+              <div className="text-xs text-foreground/40 line-through">
+                {convertPrice(product.originalPrice)}
+              </div>
+            )}
             <div className="text-xs text-foreground/70 mt-1">
               In stock:{" "}
-              <span className="text-green-500 font-medium">250+ units</span>
+              <span className="text-green-500 font-medium">Available</span>
             </div>
           </div>
           <div className="text-right">
             <div className="text-xs text-foreground/70 mb-2">Quantity</div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                onClick={() => setQuantity(Math.max(product.minOrder || 1, quantity - 1))}
                 className="size-8 rounded-lg bg-white/70 dark:bg-white/10 border border-white/20 hover:border-primary/40 flex items-center justify-center"
               >
                 <Minus className="size-4" />
@@ -208,8 +263,13 @@ export default function ProductDetail() {
             <div>
               <div className="text-xs text-foreground/70 mb-1">Sold by</div>
               <div className="font-medium">
-                {product.seller || "ChinaMall Store"}
+                {sellerName}
               </div>
+              {product.seller?.rating && (
+                <div className="text-xs text-amber-500 font-medium mt-0.5">
+                  Rating: {product.seller.rating} / 5.0
+                </div>
+              )}
             </div>
             <button className="px-4 h-9 rounded-lg bg-white/70 dark:bg-white/10 border border-white/20 text-sm hover:border-primary/40 transition">
               Contact seller
@@ -229,6 +289,21 @@ export default function ProductDetail() {
             Buy now
           </button>
         </div>
+
+        {/* Specifications */}
+        {product.specifications && (
+          <GlassCard className="p-4">
+            <h3 className="font-medium mb-3">Specifications</h3>
+            <div className="space-y-2 text-sm">
+              {Object.entries(product.specifications).map(([key, value]) => (
+                <div key={key} className="flex justify-between border-b border-white/5 pb-1">
+                  <span className="text-foreground/60 capitalize">{key}</span>
+                  <span className="font-medium">{String(value)}</span>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        )}
 
         {/* Shipping Info */}
         <GlassCard className="p-4">
