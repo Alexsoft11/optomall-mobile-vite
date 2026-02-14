@@ -174,9 +174,13 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
     };
 
     // Add sort parameter if provided
-    // TMAPI accepts: default, sales, price_asc, price_desc
-    if (sortBy) {
-      params.sort = sortBy;
+    // TMAPI accepts: default, sales, price_up, price_down
+    if (sortBy === "price_asc") {
+      params.sort = "price_up";
+    } else if (sortBy === "price_desc") {
+      params.sort = "price_down";
+    } else if (sortBy === "sales") {
+      params.sort = "sales";
     } else {
       params.sort = "default";
     }

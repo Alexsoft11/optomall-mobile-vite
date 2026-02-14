@@ -25,7 +25,7 @@ export default function Marketplace() {
     searchParams.get("search") || "",
   );
   const [sortBy, setSortBy] = useState("newest");
-  const [priceRange, setPriceRange] = useState([0, 1000]); // Increased range for real products
+  const [priceRange, setPriceRange] = useState([0, 5000]); // Increased range for real products
 
   const categories = [
     { id: "electronics", label: "Electronics", icon: "⚡" },
@@ -34,14 +34,22 @@ export default function Marketplace() {
     { id: "sports", label: "Sports", icon: "⚽" },
   ];
 
+  // Sync state with URL params
+  useEffect(() => {
+    setSelectedCategory(searchParams.get("category") || "");
+    setSearchQuery(searchParams.get("search") || "");
+  }, [searchParams]);
+
   // Load products from Alibaba API
   useEffect(() => {
     const loadApiProducts = async () => {
+      setApiProducts([]); // Clear existing products while loading new ones
       let results = [];
 
       if (searchQuery || selectedCategory) {
         // Search by keyword or category
         const keyword = searchQuery || selectedCategory || "popular";
+        console.log(`[MARKETPLACE] Searching for: ${keyword}`);
         results = await searchProducts({
           keyword,
           pageSize: 24,
@@ -49,6 +57,7 @@ export default function Marketplace() {
         } as any);
       } else {
         // Just get top products for general view
+        console.log(`[MARKETPLACE] Loading top products`);
         results = await getTopProducts();
       }
 
@@ -229,8 +238,9 @@ export default function Marketplace() {
             onClick={() => {
               setSelectedCategory("");
               setSortBy("newest");
-              setPriceRange([0, 50]);
+              setPriceRange([0, 5000]);
               searchParams.delete("category");
+              searchParams.delete("search");
               setSearchParams(searchParams);
             }}
             className="mt-4 text-sm text-primary hover:text-primary/80"
