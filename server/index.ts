@@ -5,6 +5,7 @@ import { handleDemo } from "./routes/demo";
 import {
   searchAlibabaProducts,
   getAlibabaProductDetail,
+  getAlibabaProductReviews,
   estimateShipping,
   getTopProducts,
   proxyImage,
@@ -37,6 +38,7 @@ export function createServer() {
   app.get("/api/alibaba/top-products", getTopProducts);
   app.post("/api/alibaba/search", searchAlibabaProducts);
   app.get("/api/alibaba/product/:productId", getAlibabaProductDetail);
+  app.get("/api/alibaba/product/:productId/reviews", getAlibabaProductReviews);
   app.post("/api/alibaba/shipping-estimate", estimateShipping);
 
   return app;

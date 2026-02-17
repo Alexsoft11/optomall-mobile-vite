@@ -7,6 +7,7 @@ interface AlibabaProduct {
   originalPrice: number;
   unit: string;
   images: string[];
+  video?: string | null;
   seller: {
     id: string;
     name: string;
@@ -124,6 +125,31 @@ export function useAlibaba() {
     [],
   );
 
+  const getProductReviews = useCallback(
+    async (productId: string): Promise<any> => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(`/api/alibaba/product/${productId}/reviews`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch product reviews");
+        }
+
+        const data = await response.json();
+        return data || { data: [] };
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
+        setError(errorMessage);
+        return { data: [] };
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
   const estimateShipping = useCallback(
     async (
       productId: string,
@@ -165,6 +191,7 @@ export function useAlibaba() {
     getTopProducts,
     searchProducts,
     getProductDetail,
+    getProductReviews,
     estimateShipping,
     loading,
     error,

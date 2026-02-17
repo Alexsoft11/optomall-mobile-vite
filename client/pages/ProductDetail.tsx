@@ -21,8 +21,11 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const { addToCart, toggleFavorite, isFavorite } = useShop();
   const { convertPrice } = useCurrency();
-  const { getProductDetail, loading: apiLoading } = useAlibaba();
+  const { getProductDetail, getProductReviews, loading: apiLoading } = useAlibaba();
   const [product, setProduct] = useState<any>(null);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [avgRating, setAvgRating] = useState<number>(4.5);
+  const [totalReviews, setTotalReviews] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
@@ -50,11 +53,21 @@ export default function ProductDetail() {
 
       // If not found or not local numeric, fetch from Alibaba API
       try {
-        const apiProduct = await getProductDetail(id);
+        const [apiProduct, apiReviews] = await Promise.all([
+          getProductDetail(id),
+          getProductReviews(id)
+        ]);
+
         if (apiProduct) {
           setProduct(apiProduct);
         } else {
           setError("Product not found");
+        }
+
+        if (apiReviews && apiReviews.data) {
+          setReviews(apiReviews.data);
+          if (apiReviews.rating) setAvgRating(apiReviews.rating);
+          if (apiReviews.total) setTotalReviews(apiReviews.total);
         }
       } catch (err) {
         console.error("Detail fetch error:", err);
@@ -99,46 +112,9 @@ export default function ProductDetail() {
     }
   };
 
-  // Mock reviews data
-  const reviews = [
-    {
-      id: 1,
-      author: "John Doe",
-      rating: 5,
-      date: "2 weeks ago",
-      title: "Excellent product!",
-      content: "Great quality and fast delivery. Highly recommended!",
-      helpful: 24,
-      verified: true,
-    },
-    {
-      id: 2,
-      author: "Jane Smith",
-      rating: 4,
-      date: "1 month ago",
-      title: "Good value for money",
-      content: "Product arrived well packaged. Works as expected.",
-      helpful: 18,
-      verified: true,
-    },
-    {
-      id: 3,
-      author: "Mike Johnson",
-      rating: 5,
-      date: "1 month ago",
-      title: "Perfect!",
-      content: "Exactly what I was looking for. Shipping was quick too.",
-      helpful: 15,
-      verified: true,
-    },
-  ];
-
   const sellerName = typeof product.seller === 'string'
     ? product.seller
     : (product.seller?.name || "ChinaMall Store");
-
-  const avgRating = (product.rating || 4.5);
-  const totalReviews = product.reviews || 234;
 
   return (
     <div className="px-4 pb-6 pt-4 space-y-4">
@@ -156,7 +132,14 @@ export default function ProductDetail() {
       {/* Image Section */}
       <GlassCard className="overflow-hidden">
         <div className="h-80 bg-gradient-to-b from-muted to-card relative overflow-hidden">
-          {product.images && product.images[selectedImageIndex] && (
+          {product.video && selectedImageIndex === 0 ? (
+            <video
+              src={product.video}
+              controls
+              className="w-full h-full object-contain bg-black"
+              poster={product.images[0]}
+            />
+          ) : product.images && product.images[selectedImageIndex] && (
             <img
               src={product.images[selectedImageIndex]}
               alt={product.name}
@@ -185,13 +168,20 @@ export default function ProductDetail() {
               <button
                 key={idx}
                 onClick={() => setSelectedImageIndex(idx)}
-                className={`min-w-16 size-16 rounded-lg overflow-hidden border-2 transition flex-shrink-0 ${
+                className={`min-w-16 size-16 rounded-lg overflow-hidden border-2 transition flex-shrink-0 relative ${
                   selectedImageIndex === idx
                     ? "border-primary"
                     : "border-white/20"
                 }`}
               >
                 <img src={img} alt="" className="w-full h-full object-cover" />
+                {product.video && idx === 0 && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                    <div className="size-6 rounded-full bg-white/80 flex items-center justify-center shadow-sm">
+                      <div className="border-t-[4px] border-t-transparent border-l-[7px] border-l-primary border-b-[4px] border-b-transparent ml-1" />
+                    </div>
+                  </div>
+                )}
               </button>
             ))}
           </div>
@@ -415,6 +405,18 @@ export default function ProductDetail() {
               <p className="text-sm text-foreground/70 mb-3">
                 {review.content}
               </p>
+              {review.images && review.images.length > 0 && (
+                <div className="flex gap-2 mb-3 overflow-x-auto">
+                  {review.images.map((img: string, i: number) => (
+                    <img
+                      key={i}
+                      src={img}
+                      alt="Review attachment"
+                      className="size-16 rounded-lg object-cover border border-white/10"
+                    />
+                  ))}
+                </div>
+              )}
               <button className="text-xs text-foreground/60 hover:text-foreground transition">
                 👍 Helpful ({review.helpful})
               </button>

@@ -125,6 +125,8 @@ interface AlibabaProduct {
     name: string;
     rating: number;
   };
+  rating?: number;
+  reviews?: number;
   minOrder: number;
   logistics?: {
     deliveryDays: number;
@@ -231,6 +233,10 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
         const sellerName = item.shop_info?.shop_name || item.supplierName || item.sellerName || item.companyName || "1688 Supplier";
         const sellerId = item.shop_info?.shop_id || item.supplierId || item.userId || item.sellerId || "unknown";
 
+        // Product rating and reviews
+        const productRating = parseFloat(item.goods_score || item.score || "4.5");
+        const salesCount = parseInt(item.sale_info?.sale_count || item.sales || "0");
+
         return {
           id: String(productId),
           name: item.title || item.subject || item.name || "Product",
@@ -238,6 +244,8 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
           originalPrice: originalPrice,
           unit: item.offer_unit || "piece",
           images: proxiedImages,
+          rating: productRating,
+          reviews: salesCount,
           seller: {
             id: String(sellerId),
             name: sellerName,
@@ -332,6 +340,14 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
       imageList = [mainImage];
     }
 
+    // Add description images if available (often found in 1688 details)
+    if (item.desc_images && Array.isArray(item.desc_images)) {
+      imageList = [...new Set([...imageList, ...item.desc_images])];
+    }
+
+    // Video mapping
+    const video = item.video || item.main_video || item.video_url;
+
     // Price mapping
     let price = parseFloat(item.price || item.minPrice || "0");
     if (item.price_info && item.price_info.price) {
@@ -372,6 +388,7 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
       originalPrice: originalPrice,
       unit: item.offer_unit || item.unit || "piece",
       images: proxifyImageUrls(imageList),
+      video: video ? (video.startsWith("//") ? `https:${video}` : video) : null,
       seller: {
         id: String(sellerId),
         name: sellerName,
@@ -397,6 +414,69 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
     console.error("1688 product detail error:", error);
     res.status(500).json({
       error: "Failed to get product details",
+      details: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+
+/**
+ * Get product reviews from 1688
+ *
+ * Usage: GET /api/alibaba/product/:productId/reviews
+ */
+export const getAlibabaProductReviews: RequestHandler = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { page = 1 } = req.query;
+
+    if (!productId) {
+      return res.status(400).json({ error: "productId is required" });
+    }
+
+    const cacheKey = `reviews_${productId}_${page}`;
+    const cachedResponse = getCachedData(cacheKey, CACHE_TTL_DETAIL);
+    if (cachedResponse) {
+      return res.json(cachedResponse);
+    }
+
+    // Call tmapi.top API to get item ratings/reviews
+    // Reference: https://tmapi.top/docs/ali/item-detail/get-item-ratings-by-id
+    const response = await tmapiRequest(
+      "1688/v2/item_ratings",
+      {
+        item_id: productId,
+        page: page,
+      },
+    );
+
+    const data = response.data;
+
+    // Transform TMAPI reviews to our format
+    const reviews = (data?.items || []).map((review: any) => ({
+      id: review.id || Math.random().toString(36).substr(2, 9),
+      author: review.user_name || review.nickname || "Buyer",
+      rating: parseInt(review.star_score) || 5,
+      date: review.date || "recently",
+      title: review.sku_info || "Product Review",
+      content: review.content || "No comment provided.",
+      helpful: parseInt(review.helpful_count) || 0,
+      verified: true,
+      images: proxifyImageUrls(review.images || []),
+    }));
+
+    const result = {
+      success: true,
+      data: reviews,
+      total: data?.total_count || reviews.length,
+      rating: data?.average_score || 5.0,
+    };
+
+    setCachedData(cacheKey, result);
+    res.json(result);
+  } catch (error) {
+    console.error("1688 product reviews error:", error);
+    res.status(500).json({
+      error: "Failed to get product reviews",
       details: error instanceof Error ? error.message : "Unknown error",
     });
   }
@@ -651,6 +731,10 @@ export const getTopProducts: RequestHandler = async (req, res) => {
         const sellerName = item.shop_info?.shop_name || item.supplierName || item.sellerName || item.companyName || "1688 Supplier";
         const sellerId = item.shop_info?.shop_id || item.supplierId || item.userId || item.sellerId || "unknown";
 
+        // Product rating and reviews
+        const productRating = parseFloat(item.goods_score || item.score || "4.5");
+        const salesCount = parseInt(item.sale_info?.sale_count || item.sales || "0");
+
         return {
           id: String(productId),
           name: item.title || item.subject || item.name || "Product",
@@ -658,6 +742,8 @@ export const getTopProducts: RequestHandler = async (req, res) => {
           originalPrice: originalPrice,
           unit: item.offer_unit || "piece",
           images: proxiedImages,
+          rating: productRating,
+          reviews: salesCount,
           seller: {
             id: String(sellerId),
             name: sellerName,
