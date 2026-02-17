@@ -50,6 +50,10 @@ export default function Index() {
     { id: "clothing", label: "Clothing", icon: "👕" },
     { id: "dishes", label: "Dishes", icon: "🍽️" },
     { id: "sports", label: "Sports", icon: "⚽" },
+    { id: "home", label: "Home", icon: "🏠" },
+    { id: "beauty", label: "Beauty", icon: "💄" },
+    { id: "toys", label: "Toys", icon: "🧸" },
+    { id: "automotive", label: "Automotive", icon: "🚗" },
   ];
 
   return (

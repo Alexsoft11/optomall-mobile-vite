@@ -201,27 +201,49 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
     // Transform tmapi.top response to our format
     const products: AlibabaProduct[] = (response.data?.items || []).map(
       (item: any) => {
-        // Debug logging for item structure
-        console.log(`[TMAPI] Item structure keys: ${Object.keys(item).join(', ')}`);
+        // ID mapping
+        const productId = item.item_id || item.itemId || item.offerId || item.productId || item.id;
 
-        const productId = item.itemId || item.item_id || item.offerId || item.productId || item.id;
-        const mainImage = item.image || item.picUrl || item.pic_url || item.mainImage || item.imgUrl || item.img || item.thumb;
-        const imageList = item.imageList || item.images || (mainImage ? [mainImage] : []);
+        // Image mapping - search results usually have 'img' (single URL)
+        let imageList: string[] = [];
+        if (item.img) {
+          imageList = [item.img];
+        } else if (item.imageList && Array.isArray(item.imageList)) {
+          imageList = item.imageList;
+        } else if (item.picUrl || item.pic_url || item.image || item.mainImage) {
+          imageList = [item.picUrl || item.pic_url || item.image || item.mainImage];
+        }
+
         const proxiedImages = proxifyImageUrls(imageList);
+
+        // Price mapping - search results often have 'price' or 'price_info.price'
+        let price = parseFloat(item.price || item.minPrice || "0");
+        if (item.price_info && item.price_info.price) {
+          price = parseFloat(item.price_info.price);
+        }
+
+        let originalPrice = price * 1.2;
+        if (item.price_info && item.price_info.original_price) {
+          originalPrice = parseFloat(item.price_info.original_price);
+        }
+
+        // Seller mapping
+        const sellerName = item.shop_info?.shop_name || item.supplierName || item.sellerName || item.companyName || "1688 Supplier";
+        const sellerId = item.shop_info?.shop_id || item.supplierId || item.userId || item.sellerId || "unknown";
 
         return {
           id: String(productId),
-          name: item.title || item.subject || item.name,
-          price: item.minPrice || item.price || item.promotionPrice || item.memberPrice,
-          originalPrice: item.maxPrice || item.price * 1.2,
-          unit: "piece",
+          name: item.title || item.subject || item.name || "Product",
+          price: price,
+          originalPrice: originalPrice,
+          unit: item.offer_unit || "piece",
           images: proxiedImages,
           seller: {
-            id: String(item.supplierId || item.userId || item.sellerId),
-            name: item.supplierName || item.sellerName || item.companyName,
-            rating: item.rating || 4.5,
+            id: String(sellerId),
+            name: sellerName,
+            rating: item.shop_info?.star_score || item.rating || 4.5,
           },
-          minOrder: item.minOrder || 1,
+          minOrder: item.quantity_begin || item.minOrder || 1,
           logistics: {
             deliveryDays: 15,
             shippingCost: 5,
@@ -291,35 +313,77 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
     }
 
     // Transform tmapi.top response to our format
-    const actualProductId = item.itemId || item.item_id || item.offerId || item.productId || item.id;
-    const mainImage = item.image || item.picUrl || item.pic_url || item.mainImage || item.imgUrl || item.img || item.thumb;
-    const imageList = item.imageList || item.images || [mainImage];
+    const actualProductId = item.item_id || item.itemId || item.offerId || item.productId || item.id;
+
+    // Main image mapping
+    const mainImage = item.img || item.pic_url || item.picUrl || item.main_img || item.image || item.mainImage || item.thumb;
+
+    // Image list mapping
+    let imageList: string[] = [];
+    if (item.item_images && Array.isArray(item.item_images)) {
+      imageList = item.item_images;
+    } else if (item.pc_detail_images && Array.isArray(item.pc_detail_images)) {
+      imageList = item.pc_detail_images;
+    } else if (item.imageList && Array.isArray(item.imageList)) {
+      imageList = item.imageList;
+    } else if (item.images && Array.isArray(item.images)) {
+      imageList = item.images;
+    } else if (mainImage) {
+      imageList = [mainImage];
+    }
+
+    // Price mapping
+    let price = parseFloat(item.price || item.minPrice || "0");
+    if (item.price_info && item.price_info.price) {
+      price = parseFloat(item.price_info.price);
+    }
+
+    let originalPrice = price * 1.2;
+    if (item.price_info && item.price_info.original_price) {
+      originalPrice = parseFloat(item.price_info.original_price);
+    }
+
+    // Seller mapping
+    const sellerName = item.shop_info?.shop_name || item.supplierName || item.sellerName || item.companyName || item.shopName || "1688 Supplier";
+    const sellerId = item.shop_info?.shop_id || item.supplierId || item.userId || item.sellerId || item.shopId || "unknown";
+    const sellerRating = item.shop_info?.star_score || item.rating || 4.5;
+
+    // Specifications from product_props
+    const specs: Record<string, string> = {
+      category: item.category_name || item.category || "N/A",
+      weight: item.weight || "N/A",
+      size: item.size || "N/A",
+      material: item.material || "N/A",
+      warranty: item.warranty || "No warranty",
+    };
+
+    if (item.product_props && Array.isArray(item.product_props)) {
+      item.product_props.forEach((prop: any) => {
+        if (prop.name && prop.value) {
+          specs[prop.name] = prop.value;
+        }
+      });
+    }
 
     const product = {
       id: String(actualProductId),
-      name: item.title || item.subject || item.name,
-      price: item.minPrice || item.price || item.promotionPrice || item.memberPrice,
-      originalPrice: item.maxPrice || item.price * 1.2,
-      unit: item.unit || "piece",
+      name: item.title || item.subject || item.name || "Product",
+      price: price,
+      originalPrice: originalPrice,
+      unit: item.offer_unit || item.unit || "piece",
       images: proxifyImageUrls(imageList),
       seller: {
-        id: String(item.supplierId || item.userId || item.sellerId || item.shopId),
-        name: item.supplierName || item.sellerName || item.companyName || item.shopName,
-        rating: item.rating || 4.5,
+        id: String(sellerId),
+        name: sellerName,
+        rating: sellerRating,
       },
-      minOrder: item.minOrder || 1,
+      minOrder: item.quantity_begin || item.minOrder || 1,
       logistics: {
         deliveryDays: 15,
         shippingCost: 5,
       },
       description: item.description || item.title || item.subject,
-      specifications: {
-        category: item.category || "N/A",
-        weight: item.weight || "N/A",
-        size: item.size || "N/A",
-        material: item.material || "N/A",
-        warranty: item.warranty || "No warranty",
-      },
+      specifications: specs,
     };
 
     const result = {
@@ -472,33 +536,47 @@ export const proxyImage: RequestHandler = async (req, res) => {
 
     console.log(`[IMAGE] Fetching from upstream: ${decodedUrl.substring(0, 100)}...`);
 
-    // Fetch image with timeout and bypass some security checks that might block us
-    const imageResponse = await fetch(decodedUrl, {
-      timeout: 15000,
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-        "Referer": "https://www.1688.com/",
-        "Cache-Control": "no-cache"
-      },
-    });
+    // Use AbortController for timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
 
-    if (!imageResponse.ok) {
-      console.error(`[IMAGE] Failed to fetch (${imageResponse.status}): ${imageResponse.statusText} from ${decodedUrl}`);
-      return res.status(imageResponse.status).json({ error: "Failed to fetch image" });
+    try {
+      const imageResponse = await fetch(decodedUrl, {
+        signal: controller.signal,
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+          "Referer": "https://www.1688.com/",
+          "Cache-Control": "no-cache"
+        },
+      });
+
+      if (!imageResponse.ok) {
+        console.error(`[IMAGE] Failed to fetch (${imageResponse.status}): ${imageResponse.statusText} from ${decodedUrl}`);
+        return res.status(imageResponse.status).json({ error: "Failed to fetch image" });
+      }
+
+      // Set proper headers for image response
+      const contentType = imageResponse.headers.get("content-type") || "image/jpeg";
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Cache-Control", "public, max-age=604800"); // 1 week
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("X-Content-Type-Options", "nosniff");
+
+      // Get buffer
+      const arrayBuffer = await imageResponse.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      console.log(`[IMAGE] Successfully proxied ${buffer.length} bytes for: ${decodedUrl.substring(0, 50)}...`);
+      res.send(buffer);
+    } finally {
+      clearTimeout(timeout);
     }
-
-    // Set proper headers for image response
-    const contentType = imageResponse.headers.get("content-type") || "image/jpeg";
-    res.setHeader("Content-Type", contentType);
-    res.setHeader("Cache-Control", "public, max-age=604800"); // 1 week
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("X-Content-Type-Options", "nosniff");
-
-    // Stream image to response
-    const buffer = await imageResponse.arrayBuffer();
-    res.send(Buffer.from(buffer));
-  } catch (error) {
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      console.error("[IMAGE] Fetch timed out for:", req.query.url);
+      return res.status(504).json({ error: "Image fetch timed out" });
+    }
     console.error("[IMAGE] Error:", error);
     res.status(500).json({
       error: "Failed to proxy image",
@@ -543,27 +621,49 @@ export const getTopProducts: RequestHandler = async (req, res) => {
     // Transform tmapi.top response to our format
     const products: AlibabaProduct[] = (response.data?.items || []).map(
       (item: any) => {
-        // Debug logging for item structure
-        console.log(`[TMAPI] Item structure keys: ${Object.keys(item).join(', ')}`);
+        // ID mapping
+        const productId = item.item_id || item.itemId || item.offerId || item.productId || item.id;
 
-        const productId = item.itemId || item.item_id || item.offerId || item.productId || item.id;
-        const mainImage = item.image || item.picUrl || item.pic_url || item.mainImage || item.imgUrl || item.img || item.thumb;
-        const imageList = item.imageList || item.images || (mainImage ? [mainImage] : []);
+        // Image mapping - search results usually have 'img' (single URL)
+        let imageList: string[] = [];
+        if (item.img) {
+          imageList = [item.img];
+        } else if (item.imageList && Array.isArray(item.imageList)) {
+          imageList = item.imageList;
+        } else if (item.picUrl || item.pic_url || item.image || item.mainImage) {
+          imageList = [item.picUrl || item.pic_url || item.image || item.mainImage];
+        }
+
         const proxiedImages = proxifyImageUrls(imageList);
+
+        // Price mapping - search results often have 'price' or 'price_info.price'
+        let price = parseFloat(item.price || item.minPrice || "0");
+        if (item.price_info && item.price_info.price) {
+          price = parseFloat(item.price_info.price);
+        }
+
+        let originalPrice = price * 1.2;
+        if (item.price_info && item.price_info.original_price) {
+          originalPrice = parseFloat(item.price_info.original_price);
+        }
+
+        // Seller mapping
+        const sellerName = item.shop_info?.shop_name || item.supplierName || item.sellerName || item.companyName || "1688 Supplier";
+        const sellerId = item.shop_info?.shop_id || item.supplierId || item.userId || item.sellerId || "unknown";
 
         return {
           id: String(productId),
-          name: item.title || item.subject || item.name,
-          price: item.minPrice || item.price || item.promotionPrice || item.memberPrice,
-          originalPrice: item.maxPrice || item.price * 1.2,
-          unit: "piece",
+          name: item.title || item.subject || item.name || "Product",
+          price: price,
+          originalPrice: originalPrice,
+          unit: item.offer_unit || "piece",
           images: proxiedImages,
           seller: {
-            id: String(item.supplierId || item.userId || item.sellerId),
-            name: item.supplierName || item.sellerName || item.companyName,
-            rating: item.rating || 4.5,
+            id: String(sellerId),
+            name: sellerName,
+            rating: item.shop_info?.star_score || item.rating || 4.5,
           },
-          minOrder: item.minOrder || 1,
+          minOrder: item.quantity_begin || item.minOrder || 1,
           logistics: {
             deliveryDays: 15,
             shippingCost: 5,

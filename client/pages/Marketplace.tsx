@@ -32,6 +32,12 @@ export default function Marketplace() {
     { id: "clothing", label: "Clothing", icon: "👕" },
     { id: "dishes", label: "Dishes", icon: "🍽️" },
     { id: "sports", label: "Sports", icon: "⚽" },
+    { id: "home", label: "Home", icon: "🏠" },
+    { id: "beauty", label: "Beauty", icon: "💄" },
+    { id: "toys", label: "Toys", icon: "🧸" },
+    { id: "automotive", label: "Automotive", icon: "🚗" },
+    { id: "tools", label: "Tools", icon: "🛠️" },
+    { id: "stationery", label: "Stationery", icon: "📝" },
   ];
 
   // Sync state with URL params
