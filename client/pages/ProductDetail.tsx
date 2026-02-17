@@ -1,5 +1,6 @@
 import GlassCard from "@/components/GlassCard";
 import { useParams, useNavigate } from "react-router-dom";
+import useEmblaCarousel from "embla-carousel-react";
 import {
   ArrowLeft,
   Heart,
@@ -9,11 +10,13 @@ import {
   Plus,
   Minus,
   Loader2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { products as fallbackProducts } from "@/data/products";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAlibaba } from "@/hooks/useAlibaba";
 
 export default function ProductDetail() {
@@ -22,6 +25,7 @@ export default function ProductDetail() {
   const { addToCart, toggleFavorite, isFavorite } = useShop();
   const { convertPrice } = useCurrency();
   const { getProductDetail, getProductReviews, loading: apiLoading } = useAlibaba();
+
   const [product, setProduct] = useState<any>(null);
   const [reviews, setReviews] = useState<any[]>([]);
   const [avgRating, setAvgRating] = useState<number>(4.5);
@@ -30,6 +34,27 @@ export default function ProductDetail() {
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
+
+  // Embla carousel for main images
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedImageIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    emblaApi.on("select", onSelect);
+    return () => {
+      emblaApi.off("select", onSelect);
+    };
+  }, [emblaApi, onSelect]);
+
+  const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
+  const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
+  const scrollTo = useCallback((index: number) => emblaApi && emblaApi.scrollTo(index), [emblaApi]);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -131,24 +156,51 @@ export default function ProductDetail() {
 
       {/* Image Section */}
       <GlassCard className="overflow-hidden">
-        <div className="h-80 bg-gradient-to-b from-muted to-card relative overflow-hidden">
-          {product.video && selectedImageIndex === 0 ? (
-            <video
-              src={product.video}
-              controls
-              className="w-full h-full object-contain bg-black"
-              poster={product.images[0]}
-            />
-          ) : product.images && product.images[selectedImageIndex] && (
-            <img
-              src={product.images[selectedImageIndex]}
-              alt={product.name}
-              className="w-full h-full object-contain bg-white/50"
-            />
+        <div className="relative group">
+          <div className="overflow-hidden" ref={emblaRef}>
+            <div className="flex h-80">
+              {product.images && product.images.map((img: string, idx: number) => (
+                <div key={idx} className="flex-[0_0_100%] min-w-0 relative h-full">
+                  {product.video && idx === 0 ? (
+                    <video
+                      src={product.video}
+                      controls
+                      className="w-full h-full object-contain bg-black"
+                      poster={img}
+                    />
+                  ) : (
+                    <img
+                      src={img}
+                      alt={`${product.name} - ${idx + 1}`}
+                      className="w-full h-full object-contain bg-white/50"
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Navigation Arrows */}
+          {product.images && product.images.length > 1 && (
+            <>
+              <button
+                onClick={scrollPrev}
+                className="absolute left-2 top-1/2 -translate-y-1/2 size-10 rounded-full bg-white/80 dark:bg-black/50 flex items-center justify-center border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+              >
+                <ChevronLeft className="size-6" />
+              </button>
+              <button
+                onClick={scrollNext}
+                className="absolute right-2 top-1/2 -translate-y-1/2 size-10 rounded-full bg-white/80 dark:bg-black/50 flex items-center justify-center border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+              >
+                <ChevronRight className="size-6" />
+              </button>
+            </>
           )}
+
           <button
             onClick={() => toggleFavorite(product.id)}
-            className="absolute top-4 right-4 size-10 rounded-lg grid place-items-center bg-white/90 dark:bg-white/20 border border-white/20 hover:bg-white dark:hover:bg-white/30"
+            className="absolute top-4 right-4 size-10 rounded-lg grid place-items-center bg-white/90 dark:bg-white/20 border border-white/20 hover:bg-white dark:hover:bg-white/30 z-10"
           >
             <Heart
               className={
@@ -158,16 +210,31 @@ export default function ProductDetail() {
               }
             />
           </button>
-          <button className="absolute top-4 left-4 size-10 rounded-lg grid place-items-center bg-white/90 dark:bg-white/20 border border-white/20 hover:bg-white dark:hover:bg-white/30">
+          <button className="absolute top-4 left-4 size-10 rounded-lg grid place-items-center bg-white/90 dark:bg-white/20 border border-white/20 hover:bg-white dark:hover:bg-white/30 z-10">
             <Share2 className="size-5" />
           </button>
+
+          {/* Pagination Dots */}
+          {product.images && product.images.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-black/20 px-2 py-1.5 rounded-full backdrop-blur-sm">
+              {product.images.map((_: any, idx: number) => (
+                <div
+                  key={idx}
+                  className={`size-1.5 rounded-full transition-all ${
+                    selectedImageIndex === idx ? "w-4 bg-white" : "bg-white/50"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
+
         {product.images && product.images.length > 1 && (
-          <div className="p-3 flex gap-2 border-t border-white/10 overflow-x-auto">
+          <div className="p-3 flex gap-2 border-t border-white/10 overflow-x-auto bg-card/50 no-scrollbar">
             {product.images.map((img: string, idx: number) => (
               <button
                 key={idx}
-                onClick={() => setSelectedImageIndex(idx)}
+                onClick={() => scrollTo(idx)}
                 className={`min-w-16 size-16 rounded-lg overflow-hidden border-2 transition flex-shrink-0 relative ${
                   selectedImageIndex === idx
                     ? "border-primary"
@@ -202,9 +269,18 @@ export default function ProductDetail() {
             )}
           </div>
           <h2 className="text-xl font-semibold">{product.name}</h2>
-          <div className="text-sm text-foreground/70 mt-2 line-clamp-3 overflow-hidden transition-all duration-300">
-            {product.description}
-          </div>
+          <div
+            className={`text-sm text-foreground/70 mt-2 overflow-hidden transition-all duration-300 ${isDescExpanded ? "" : "line-clamp-3"}`}
+            dangerouslySetInnerHTML={{ __html: product.description }}
+          />
+          {product.description && product.description.length > 150 && (
+            <button
+              onClick={() => setIsDescExpanded(!isDescExpanded)}
+              className="text-xs text-primary font-medium mt-1 hover:underline"
+            >
+              {isDescExpanded ? "Show Less" : "Read More"}
+            </button>
+          )}
         </div>
 
         {/* Rating */}
