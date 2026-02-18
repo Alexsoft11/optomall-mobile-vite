@@ -298,7 +298,7 @@ export default function ProductDetail() {
           <div className="p-3 flex gap-2 border-t border-white/10 overflow-x-auto bg-card/50 no-scrollbar">
             {product.images.map((img: string, idx: number) => (
               <button
-                key={idx}
+                key={`thumb-${idx}-${img.substring(0, 20)}`}
                 onClick={() => scrollTo(idx)}
                 className={`min-w-16 size-16 rounded-lg overflow-hidden border-2 transition flex-shrink-0 relative ${
                   selectedImageIndex === idx
@@ -367,8 +367,8 @@ export default function ProductDetail() {
         {/* SKU Selection */}
         {product.skuProps && product.skuProps.length > 0 && (
           <div className="space-y-4">
-            {product.skuProps.map((prop: any) => (
-              <div key={prop.name} className="space-y-2">
+            {product.skuProps.map((prop: any, pIdx: number) => (
+              <div key={`prop-${prop.name}-${pIdx}`} className="space-y-2">
                 <div className="flex justify-between items-center">
                   <label className="text-sm font-medium">{prop.name}</label>
                   {selectedProps[prop.name] && (
@@ -378,11 +378,11 @@ export default function ProductDetail() {
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {prop.values.map((val: any) => {
+                  {prop.values.map((val: any, vIdx: number) => {
                     const isSelected = selectedProps[prop.name] === val.id;
                     return (
                       <button
-                        key={val.id}
+                        key={`val-${val.id || vIdx}-${val.name}`}
                         onClick={() => setSelectedProps(prev => ({ ...prev, [prop.name]: val.id }))}
                         className={`px-3 py-2 rounded-lg border text-sm transition-all flex items-center gap-2 ${
                           isSelected
@@ -413,7 +413,7 @@ export default function ProductDetail() {
                   (idx === product.priceLevels.length - 1 || quantity < product.priceLevels[idx + 1].quantity);
                 return (
                   <div
-                    key={idx}
+                    key={`tier-${idx}-${level.quantity}`}
                     className={`p-2 rounded-lg border text-center transition-all ${
                       isActive
                         ? "border-primary bg-primary/5 ring-1 ring-primary"
@@ -539,8 +539,8 @@ export default function ProductDetail() {
           <GlassCard className="p-4">
             <h3 className="font-medium mb-3">Specifications</h3>
             <div className="space-y-2 text-sm">
-              {Object.entries(product.specifications).map(([key, value]) => (
-                <div key={key} className="flex justify-between border-b border-white/5 pb-1">
+              {Object.entries(product.specifications).map(([key, value], idx) => (
+                <div key={`spec-${key}-${idx}`} className="flex justify-between border-b border-white/5 pb-1">
                   <span className="text-foreground/60 capitalize">{key}</span>
                   <span className="font-medium">{String(value)}</span>
                 </div>
