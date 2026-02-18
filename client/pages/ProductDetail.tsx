@@ -16,7 +16,7 @@ import {
 import { useShop } from "@/context/ShopContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { products as fallbackProducts } from "@/data/products";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAlibaba } from "@/hooks/useAlibaba";
 
 export default function ProductDetail() {
