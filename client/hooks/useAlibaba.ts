@@ -13,11 +13,22 @@ interface AlibabaProduct {
     name: string;
     rating: number;
   };
+  rating?: number;
+  reviews?: number;
   minOrder: number;
+  stock?: number;
+  skus?: any[];
+  skuProps?: any[];
+  priceLevels?: any[];
+  weight?: string;
+  volume?: string;
+  descriptionImages?: string[];
   logistics?: {
     deliveryDays: number;
     shippingCost: number;
   };
+  description?: string;
+  specifications?: Record<string, string>;
 }
 
 interface SearchParams {

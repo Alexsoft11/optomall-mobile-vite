@@ -35,6 +35,65 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isDescExpanded, setIsDescExpanded] = useState(false);
+  const [selectedProps, setSelectedProps] = useState<Record<string, string>>({});
+  const [currentSku, setCurrentSku] = useState<any>(null);
+  const [displayPrice, setDisplayPrice] = useState<number>(0);
+  const [displayStock, setDisplayStock] = useState<number>(0);
+
+  // Helper to calculate price based on quantity (Tier Pricing)
+  const calculateTierPrice = useCallback((qty: number, basePrice: number, levels: any[]) => {
+    if (!levels || levels.length === 0) return basePrice;
+
+    // Find the highest quantity level that is <= current quantity
+    const applicableLevel = [...levels]
+      .sort((a, b) => b.quantity - a.quantity)
+      .find(level => qty >= level.quantity);
+
+    return applicableLevel ? applicableLevel.price : basePrice;
+  }, []);
+
+  // Update SKU and Price when selection or quantity changes
+  useEffect(() => {
+    if (!product) return;
+
+    let price = product.price;
+    let stock = product.stock || 0;
+
+    // Find matching SKU
+    if (product.skus && product.skus.length > 0) {
+      const selectedPropIds = Object.values(selectedProps).sort().join(';');
+      const matchingSku = product.skus.find((sku: any) => {
+        // Handle different prop formats from API
+        const skuPropIds = Array.isArray(sku.props) ? sku.props.sort().join(';') : String(sku.props);
+
+        // Simple match: if all selected props are in the SKU props
+        return Object.values(selectedProps).every(valId => skuPropIds.includes(valId));
+      });
+
+      if (matchingSku) {
+        setCurrentSku(matchingSku);
+        price = matchingSku.price || price;
+        stock = matchingSku.stock;
+
+        // Update image if SKU has one
+        if (matchingSku.image) {
+          const imgIndex = product.images.indexOf(matchingSku.image);
+          if (imgIndex !== -1) {
+            setSelectedImageIndex(imgIndex);
+            scrollTo(imgIndex);
+          }
+        }
+      } else {
+        setCurrentSku(null);
+      }
+    }
+
+    // Apply Tier Pricing if available
+    const finalPrice = calculateTierPrice(quantity, price, product.priceLevels || []);
+    setDisplayPrice(finalPrice);
+    setDisplayStock(stock);
+
+  }, [selectedProps, quantity, product, calculateTierPrice, scrollTo]);
 
   // Embla carousel for main images
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
@@ -130,6 +189,12 @@ export default function ProductDetail() {
       </div>
     );
   }
+
+  // Check if all required SKU properties are selected
+  const isAllPropsSelected = useMemo(() => {
+    if (!product?.skuProps || product.skuProps.length === 0) return true;
+    return product.skuProps.every((prop: any) => !!selectedProps[prop.name]);
+  }, [product, selectedProps]);
 
   const handleAddToCart = () => {
     for (let i = 0; i < quantity; i++) {
@@ -273,15 +338,100 @@ export default function ProductDetail() {
             className={`text-sm text-foreground/70 mt-2 overflow-hidden transition-all duration-300 ${isDescExpanded ? "" : "line-clamp-3"}`}
             dangerouslySetInnerHTML={{ __html: product.description }}
           />
-          {product.description && product.description.length > 150 && (
+          {isDescExpanded && product.descriptionImages && product.descriptionImages.length > 0 && (
+            <div className="mt-4 space-y-4">
+              <h4 className="text-xs font-bold text-foreground/50 uppercase">Product Gallery</h4>
+              <div className="flex flex-col gap-2">
+                {product.descriptionImages.map((img: string, idx: number) => (
+                  <img
+                    key={idx}
+                    src={img}
+                    loading="lazy"
+                    alt={`Description ${idx + 1}`}
+                    className="w-full rounded-lg bg-white/5"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+          {((product.description && product.description.length > 150) || (product.descriptionImages && product.descriptionImages.length > 0)) && (
             <button
               onClick={() => setIsDescExpanded(!isDescExpanded)}
               className="text-xs text-primary font-medium mt-1 hover:underline"
             >
-              {isDescExpanded ? "Show Less" : "Read More"}
+              {isDescExpanded ? "Show Less" : "Read More & View Photos"}
             </button>
           )}
         </div>
+
+        {/* SKU Selection */}
+        {product.skuProps && product.skuProps.length > 0 && (
+          <div className="space-y-4">
+            {product.skuProps.map((prop: any) => (
+              <div key={prop.name} className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-medium">{prop.name}</label>
+                  {selectedProps[prop.name] && (
+                    <span className="text-xs text-primary font-medium">
+                      {prop.values.find((v: any) => v.id === selectedProps[prop.name])?.name}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {prop.values.map((val: any) => {
+                    const isSelected = selectedProps[prop.name] === val.id;
+                    return (
+                      <button
+                        key={val.id}
+                        onClick={() => setSelectedProps(prev => ({ ...prev, [prop.name]: val.id }))}
+                        className={`px-3 py-2 rounded-lg border text-sm transition-all flex items-center gap-2 ${
+                          isSelected
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-white/20 bg-white/50 dark:bg-white/5 hover:border-primary/40"
+                        }`}
+                      >
+                        {val.image && (
+                          <img src={val.image} alt="" className="size-6 rounded object-cover" />
+                        )}
+                        {val.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Tier Pricing Display */}
+        {product.priceLevels && product.priceLevels.length > 0 && (
+          <GlassCard className="p-4">
+            <h3 className="text-xs font-medium text-foreground/70 mb-3 uppercase tracking-wider">Wholesale Prices</h3>
+            <div className="grid grid-cols-3 gap-2">
+              {product.priceLevels.map((level: any, idx: number) => {
+                const isActive = quantity >= level.quantity &&
+                  (idx === product.priceLevels.length - 1 || quantity < product.priceLevels[idx + 1].quantity);
+                return (
+                  <div
+                    key={idx}
+                    className={`p-2 rounded-lg border text-center transition-all ${
+                      isActive
+                        ? "border-primary bg-primary/5 ring-1 ring-primary"
+                        : "border-white/10 bg-white/30"
+                    }`}
+                  >
+                    <div className={`text-xs font-bold ${isActive ? "text-primary" : "text-foreground/70"}`}>
+                      {level.quantity}+ {product.unit || "pcs"}
+                    </div>
+                    <div className={`text-sm font-black ${isActive ? "text-primary" : "text-foreground"}`}>
+                      {convertPrice(level.price)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </GlassCard>
+        )}
 
         {/* Rating */}
         <GlassCard className="p-4">
@@ -307,16 +457,22 @@ export default function ProductDetail() {
           <div>
             <div className="text-xs text-foreground/70 mb-1">Price</div>
             <div className="text-3xl font-bold text-primary">
-              {convertPrice(product.price)}
+              {convertPrice(displayPrice || product.price)}
             </div>
-            {product.originalPrice && product.originalPrice > product.price && (
+            {product.originalPrice && product.originalPrice > (displayPrice || product.price) && (
               <div className="text-xs text-foreground/40 line-through">
                 {convertPrice(product.originalPrice)}
               </div>
             )}
             <div className="text-xs text-foreground/70 mt-1">
-              In stock:{" "}
-              <span className="text-green-500 font-medium">Available</span>
+              Stock:{" "}
+              {displayStock > 0 ? (
+                <span className="text-green-500 font-medium">{displayStock} available</span>
+              ) : displayStock === 0 && product.skus?.length > 0 && !currentSku ? (
+                <span className="text-amber-500 font-medium">Select options</span>
+              ) : (
+                <span className="text-destructive font-medium">Out of stock</span>
+              )}
             </div>
           </div>
           <div className="text-right">
@@ -330,8 +486,9 @@ export default function ProductDetail() {
               </button>
               <div className="w-12 text-center font-semibold">{quantity}</div>
               <button
-                onClick={() => setQuantity(quantity + 1)}
-                className="size-8 rounded-lg bg-white/70 dark:bg-white/10 border border-white/20 hover:border-primary/40 flex items-center justify-center"
+                onClick={() => setQuantity(Math.max(product.minOrder || 1, Math.min(displayStock || 9999, quantity + 1)))}
+                disabled={displayStock > 0 && quantity >= displayStock}
+                className="size-8 rounded-lg bg-white/70 dark:bg-white/10 border border-white/20 hover:border-primary/40 flex items-center justify-center disabled:opacity-30"
               >
                 <Plus className="size-4" />
               </button>
@@ -363,11 +520,16 @@ export default function ProductDetail() {
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={handleAddToCart}
-            className="h-12 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition flex items-center justify-center gap-2"
+            disabled={!isAllPropsSelected || (product.skus?.length > 0 && !currentSku) || (displayStock === 0 && product.skus?.length > 0)}
+            className="h-12 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed"
           >
-            <ShoppingCart className="size-5" /> Add to cart
+            <ShoppingCart className="size-5" />
+            {!isAllPropsSelected ? "Select options" : (displayStock === 0 && product.skus?.length > 0 && currentSku ? "Sold Out" : "Add to cart")}
           </button>
-          <button className="h-12 rounded-lg bg-white/70 dark:bg-white/10 border border-white/20 font-medium hover:border-primary/40 transition">
+          <button
+            disabled={!isAllPropsSelected || (product.skus?.length > 0 && !currentSku) || (displayStock === 0 && product.skus?.length > 0)}
+            className="h-12 rounded-lg bg-white/70 dark:bg-white/10 border border-white/20 font-medium hover:border-primary/40 transition disabled:opacity-50"
+          >
             Buy now
           </button>
         </div>
@@ -390,7 +552,23 @@ export default function ProductDetail() {
         {/* Shipping Info */}
         <GlassCard className="p-4">
           <h3 className="font-medium mb-3">Shipping & Returns</h3>
-          <div className="space-y-2 text-sm">
+          <div className="space-y-3 text-sm">
+            {(product.weight || product.volume) && (
+              <div className="flex gap-4 pb-2 border-b border-white/5">
+                {product.weight && (
+                  <div>
+                    <span className="text-foreground/60 block text-[10px] uppercase">Weight</span>
+                    <span className="font-bold">{product.weight}</span>
+                  </div>
+                )}
+                {product.volume && (
+                  <div>
+                    <span className="text-foreground/60 block text-[10px] uppercase">Volume</span>
+                    <span className="font-bold">{product.volume}</span>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="flex items-start gap-3">
               <span className="text-primary font-semibold mt-0.5">📦</span>
               <div>

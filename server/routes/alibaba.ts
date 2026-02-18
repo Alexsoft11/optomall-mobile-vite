@@ -19,12 +19,19 @@ const TMAPI_TOKEN = process.env.VITE_TMAPI_API_TOKEN || process.env.TMAPI_TOKEN 
 console.log("[TMAPI] Base URL:", TMAPI_BASE_URL);
 console.log("[TMAPI] Token configured:", TMAPI_TOKEN ? "✓" : "✗");
 
-// Simple in-memory cache
-const cache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL_DETAIL = 5 * 60 * 1000; // 5 minutes
-const CACHE_TTL_SEARCH = Infinity; // No time limit for search per requirements
+// Cache configuration
+const CACHE_CONFIG = {
+  DETAIL_TTL: 10 * 60 * 1000, // 10 minutes
+  SEARCH_TTL: 60 * 60 * 1000, // 1 hour
+  TOP_PRODUCTS_TTL: 24 * 60 * 60 * 1000, // 24 hours
+};
 
-function getCachedData(key: string, ttl: number) {
+// Separate caches for different types of data
+const detailCache = new Map<string, { data: any; timestamp: number }>();
+const searchCache = new Map<string, { data: any; timestamp: number }>();
+const topProductsCache = new Map<string, { data: any; timestamp: number }>();
+
+function getFromCache(cache: Map<string, any>, key: string, ttl: number) {
   const cached = cache.get(key);
   if (cached && (ttl === Infinity || Date.now() - cached.timestamp < ttl)) {
     return cached.data;
@@ -32,7 +39,7 @@ function getCachedData(key: string, ttl: number) {
   return null;
 }
 
-function setCachedData(key: string, data: any) {
+function setToCache(cache: Map<string, any>, key: string, data: any) {
   cache.set(key, { data, timestamp: Date.now() });
 }
 
@@ -120,6 +127,7 @@ interface AlibabaProduct {
   originalPrice: number;
   unit: string;
   images: string[];
+  video?: string | null;
   seller: {
     id: string;
     name: string;
@@ -128,10 +136,19 @@ interface AlibabaProduct {
   rating?: number;
   reviews?: number;
   minOrder: number;
+  stock?: number;
+  skus?: any[];
+  skuProps?: any[];
+  priceLevels?: any[];
+  weight?: string;
+  volume?: string;
+  descriptionImages?: string[];
   logistics?: {
     deliveryDays: number;
     shippingCost: number;
   };
+  description?: string;
+  specifications?: Record<string, string>;
 }
 
 interface SearchParams {
@@ -192,7 +209,7 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
     }
 
     const cacheKey = `search_${JSON.stringify(params)}`;
-    const cachedResponse = getCachedData(cacheKey, CACHE_TTL_SEARCH);
+    const cachedResponse = getFromCache(searchCache, cacheKey, CACHE_CONFIG.SEARCH_TTL);
     if (cachedResponse) {
       console.log(`[CACHE] Hit for search: ${keyword}`);
       return res.json(cachedResponse);
@@ -268,7 +285,7 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
       pageSize,
     };
 
-    setCachedData(cacheKey, result);
+    setToCache(searchCache, cacheKey, result);
     res.json(result);
   } catch (error) {
     console.error("1688 search error:", error);
@@ -299,7 +316,7 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
     }
 
     const cacheKey = `detail_${productId}`;
-    const cachedResponse = getCachedData(cacheKey, CACHE_TTL_DETAIL);
+    const cachedResponse = getFromCache(detailCache, cacheKey, CACHE_CONFIG.DETAIL_TTL);
     if (cachedResponse) {
       console.log(`[CACHE] Hit for detail: ${productId}`);
       return res.json(cachedResponse);
@@ -341,8 +358,9 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
     }
 
     // Add description images if available (often found in 1688 details)
+    let descriptionImages: string[] = [];
     if (item.desc_images && Array.isArray(item.desc_images)) {
-      imageList = [...new Set([...imageList, ...item.desc_images])];
+      descriptionImages = proxifyImageUrls(item.desc_images);
     }
 
     // Video mapping
@@ -381,7 +399,36 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
       });
     }
 
-    const product = {
+    // SKU mapping
+    const skus = (item.skus || []).map((sku: any) => ({
+      id: sku.sku_id || sku.skuId || sku.id,
+      price: parseFloat(sku.price || item.price),
+      stock: parseInt(sku.stock || sku.quantity || 0),
+      props: sku.props_ids || sku.propsIds || sku.attributes || [],
+      image: sku.img ? proxifyImageUrls([sku.img])[0] : null,
+    }));
+
+    const skuProps = (item.sku_props || item.skuProps || []).map((prop: any) => ({
+      name: prop.name || prop.prop_name,
+      values: (prop.values || prop.prop_values || []).map((val: any) => ({
+        id: val.id || val.value_id,
+        name: val.name || val.value_name,
+        image: val.img ? proxifyImageUrls([val.img])[0] : null,
+      })),
+    }));
+
+    // Tier Pricing mapping
+    let priceLevels = item.price_info?.price_levels || item.quantity_prices || item.price_levels || [];
+    if (priceLevels.length === 0 && item.price_info?.tiered_prices) {
+      priceLevels = item.price_info.tiered_prices;
+    }
+
+    const formattedPriceLevels = priceLevels.map((level: any) => ({
+      quantity: parseInt(level.quantity || level.min_quantity || level.begin_amount || 0),
+      price: parseFloat(level.price || level.unit_price || 0),
+    })).sort((a: any, b: any) => a.quantity - b.quantity);
+
+    const product: AlibabaProduct = {
       id: String(actualProductId),
       name: item.title || item.subject || item.name || "Product",
       price: price,
@@ -395,6 +442,13 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
         rating: sellerRating,
       },
       minOrder: item.quantity_begin || item.minOrder || 1,
+      stock: parseInt(item.stock || item.quantity || 0),
+      skus: skus,
+      skuProps: skuProps,
+      priceLevels: formattedPriceLevels,
+      weight: item.weight || specs.weight,
+      volume: item.volume || specs.volume,
+      descriptionImages: descriptionImages,
       logistics: {
         deliveryDays: 15,
         shippingCost: 5,
@@ -408,7 +462,7 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
       data: product,
     };
 
-    setCachedData(cacheKey, result);
+    setToCache(detailCache, cacheKey, result);
     res.json(result);
   } catch (error) {
     console.error("1688 product detail error:", error);
@@ -434,7 +488,7 @@ export const getAlibabaProductReviews: RequestHandler = async (req, res) => {
     }
 
     const cacheKey = `reviews_${productId}_${page}`;
-    const cachedResponse = getCachedData(cacheKey, CACHE_TTL_DETAIL);
+    const cachedResponse = getFromCache(detailCache, cacheKey, CACHE_CONFIG.DETAIL_TTL);
     if (cachedResponse) {
       return res.json(cachedResponse);
     }
@@ -471,7 +525,7 @@ export const getAlibabaProductReviews: RequestHandler = async (req, res) => {
       rating: data?.average_score || 5.0,
     };
 
-    setCachedData(cacheKey, result);
+    setToCache(detailCache, cacheKey, result);
     res.json(result);
   } catch (error) {
     console.error("1688 product reviews error:", error);
@@ -682,14 +736,11 @@ export const getTopProducts: RequestHandler = async (req, res) => {
     const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
 
     const cacheKey = `top_products_${randomKeyword}`;
-    const cachedResponse = getCachedData(cacheKey, 60 * 60 * 1000); // 1 hour cache for homepage
-    // Temporarily disable cache hit to see logs
-    /*
+    const cachedResponse = getFromCache(topProductsCache, cacheKey, CACHE_CONFIG.TOP_PRODUCTS_TTL);
     if (cachedResponse) {
       console.log(`[CACHE] Hit for top products: ${randomKeyword}`);
       return res.json(cachedResponse);
     }
-    */
 
     const response = await tmapiRequest("1688/en/search/items", {
       keyword: randomKeyword,
@@ -763,7 +814,7 @@ export const getTopProducts: RequestHandler = async (req, res) => {
       data: products.slice(0, 20), // Ensure exactly 20 products
     };
 
-    setCachedData(cacheKey, result);
+    setToCache(topProductsCache, cacheKey, result);
     res.json(result);
   } catch (error) {
     console.error("Top products error:", error);
