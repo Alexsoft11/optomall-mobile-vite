@@ -40,6 +40,26 @@ export default function ProductDetail() {
   const [displayPrice, setDisplayPrice] = useState<number>(0);
   const [displayStock, setDisplayStock] = useState<number>(0);
 
+  // Embla carousel for main images
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedImageIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    emblaApi.on("select", onSelect);
+    return () => {
+      emblaApi.off("select", onSelect);
+    };
+  }, [emblaApi, onSelect]);
+
+  const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
+  const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
+  const scrollTo = useCallback((index: number) => emblaApi && emblaApi.scrollTo(index), [emblaApi]);
+
   // Helper to calculate price based on quantity (Tier Pricing)
   const calculateTierPrice = useCallback((qty: number, basePrice: number, levels: any[]) => {
     if (!levels || levels.length === 0) return basePrice;
@@ -94,26 +114,6 @@ export default function ProductDetail() {
     setDisplayStock(stock);
 
   }, [selectedProps, quantity, product, calculateTierPrice, scrollTo]);
-
-  // Embla carousel for main images
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
-
-  const onSelect = useCallback(() => {
-    if (!emblaApi) return;
-    setSelectedImageIndex(emblaApi.selectedScrollSnap());
-  }, [emblaApi]);
-
-  useEffect(() => {
-    if (!emblaApi) return;
-    emblaApi.on("select", onSelect);
-    return () => {
-      emblaApi.off("select", onSelect);
-    };
-  }, [emblaApi, onSelect]);
-
-  const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
-  const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
-  const scrollTo = useCallback((index: number) => emblaApi && emblaApi.scrollTo(index), [emblaApi]);
 
   useEffect(() => {
     const loadProduct = async () => {
