@@ -176,10 +176,6 @@ export default function ProductDetail() {
     }
   };
 
-  const sellerName = typeof product.seller === 'string'
-    ? product.seller
-    : (product.seller?.name || "ChinaMall Store");
-
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-4 text-center">
@@ -205,6 +201,10 @@ export default function ProductDetail() {
       </div>
     );
   }
+
+  const sellerName = typeof product.seller === 'string'
+    ? product.seller
+    : (product.seller?.name || "ChinaMall Store");
 
   return (
     <div className="px-4 pb-6 pt-4 space-y-4">
