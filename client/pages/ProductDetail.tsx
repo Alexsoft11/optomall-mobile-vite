@@ -60,6 +60,12 @@ export default function ProductDetail() {
   const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
   const scrollTo = useCallback((index: number) => emblaApi && emblaApi.scrollTo(index), [emblaApi]);
 
+  // Check if all required SKU properties are selected
+  const isAllPropsSelected = useMemo(() => {
+    if (!product?.skuProps || product.skuProps.length === 0) return true;
+    return product.skuProps.every((prop: any) => !!selectedProps[prop.name]);
+  }, [product, selectedProps]);
+
   // Helper to calculate price based on quantity (Tier Pricing)
   const calculateTierPrice = useCallback((qty: number, basePrice: number, levels: any[]) => {
     if (!levels || levels.length === 0) return basePrice;
@@ -164,6 +170,16 @@ export default function ProductDetail() {
     loadProduct();
   }, [id, getProductDetail]);
 
+  const handleAddToCart = () => {
+    for (let i = 0; i < quantity; i++) {
+      addToCart(product);
+    }
+  };
+
+  const sellerName = typeof product.seller === 'string'
+    ? product.seller
+    : (product.seller?.name || "ChinaMall Store");
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-4 text-center">
@@ -189,22 +205,6 @@ export default function ProductDetail() {
       </div>
     );
   }
-
-  // Check if all required SKU properties are selected
-  const isAllPropsSelected = useMemo(() => {
-    if (!product?.skuProps || product.skuProps.length === 0) return true;
-    return product.skuProps.every((prop: any) => !!selectedProps[prop.name]);
-  }, [product, selectedProps]);
-
-  const handleAddToCart = () => {
-    for (let i = 0; i < quantity; i++) {
-      addToCart(product);
-    }
-  };
-
-  const sellerName = typeof product.seller === 'string'
-    ? product.seller
-    : (product.seller?.name || "ChinaMall Store");
 
   return (
     <div className="px-4 pb-6 pt-4 space-y-4">
