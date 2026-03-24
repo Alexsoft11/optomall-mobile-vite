@@ -7,6 +7,7 @@ import { products } from "@/data/products";
 import { useProducts } from "@/hooks/useProducts";
 import { useAlibaba } from "@/hooks/useAlibaba";
 import { useEffect, useState } from "react";
+import { CATEGORY_CATALOG } from "@shared/catalog";
 
 interface AlibabaProductForDisplay {
   id: string;
@@ -45,16 +46,7 @@ export default function Index() {
 
   const featured = productsList.slice(0, 4);
   const latest = productsList.slice(0, 8);
-  const categories = [
-    { id: "electronics", label: "Electronics", icon: "⚡" },
-    { id: "clothing", label: "Clothing", icon: "👕" },
-    { id: "dishes", label: "Dishes", icon: "🍽️" },
-    { id: "sports", label: "Sports", icon: "⚽" },
-    { id: "home", label: "Home", icon: "🏠" },
-    { id: "beauty", label: "Beauty", icon: "💄" },
-    { id: "toys", label: "Toys", icon: "🧸" },
-    { id: "automotive", label: "Automotive", icon: "🚗" },
-  ];
+  const categories = CATEGORY_CATALOG;
 
   return (
     <div className="px-4 pb-6 pt-4 space-y-6">

@@ -7,6 +7,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAlibaba } from "@/hooks/useAlibaba";
+import { CATEGORY_CATALOG, getCategoryKeywords, normalizeCategory } from "@shared/catalog";
 
 export default function Marketplace() {
   const navigate = useNavigate();
@@ -27,18 +28,7 @@ export default function Marketplace() {
   const [sortBy, setSortBy] = useState("newest");
   const [priceRange, setPriceRange] = useState([0, 5000]); // Increased range for real products
 
-  const categories = [
-    { id: "electronics", label: "Electronics", icon: "⚡" },
-    { id: "clothing", label: "Clothing", icon: "👕" },
-    { id: "dishes", label: "Dishes", icon: "🍽️" },
-    { id: "sports", label: "Sports", icon: "⚽" },
-    { id: "home", label: "Home", icon: "🏠" },
-    { id: "beauty", label: "Beauty", icon: "💄" },
-    { id: "toys", label: "Toys", icon: "🧸" },
-    { id: "automotive", label: "Automotive", icon: "🚗" },
-    { id: "tools", label: "Tools", icon: "🛠️" },
-    { id: "stationery", label: "Stationery", icon: "📝" },
-  ];
+  const categories = CATEGORY_CATALOG;
 
   // Sync state with URL params
   useEffect(() => {
@@ -53,13 +43,19 @@ export default function Marketplace() {
       let results = [];
 
       if (searchQuery || selectedCategory) {
-        // Search by keyword or category
-        const keyword = searchQuery || selectedCategory || "popular";
+        const normalizedCategory = normalizeCategory(selectedCategory);
+        const categoryKeyword = normalizedCategory !== "other"
+          ? getCategoryKeywords(normalizedCategory)[0]
+          : "popular";
+        const keyword = searchQuery
+          ? `${searchQuery} ${categoryKeyword}`.trim()
+          : categoryKeyword;
         console.log(`[MARKETPLACE] Searching for: ${keyword}`);
         results = await searchProducts({
           keyword,
+          category: normalizedCategory !== "other" ? normalizedCategory : undefined,
           pageSize: 24,
-          sortBy: sortBy === "price-low" ? "price_asc" : sortBy === "price-high" ? "price_desc" : "relevance"
+          sortBy: sortBy === "price-low" ? "price_asc" : sortBy === "price-high" ? "price_desc" : "relevance",
         } as any);
       } else {
         // Just get top products for general view
@@ -77,25 +73,22 @@ export default function Marketplace() {
 
   const productsList = useMemo(() => {
     // Combine API products with local ones, preferring API
-    let combined = apiProducts.length > 0 ? apiProducts : [...supabaseItems, ...fallbackProducts];
+    const combined = apiProducts.length > 0 ? apiProducts : [...supabaseItems, ...fallbackProducts];
 
-    // Frontend filtering for price range and local search if API didn't return anything
     let filtered = combined;
 
-    if (apiProducts.length === 0) {
-      // Only do heavy frontend filtering if we're using mock data
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        filtered = filtered.filter(
-          (p) =>
-            p.name.toLowerCase().includes(query) ||
-            p.description?.toLowerCase().includes(query),
-        );
-      }
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (p) =>
+          p.name.toLowerCase().includes(query) ||
+          p.description?.toLowerCase().includes(query),
+      );
+    }
 
-      if (selectedCategory) {
-        filtered = filtered.filter((p) => p.category === selectedCategory);
-      }
+    if (selectedCategory) {
+      const normalizedCategory = normalizeCategory(selectedCategory);
+      filtered = filtered.filter((p) => normalizeCategory((p as any).category) === normalizedCategory);
     }
 
     filtered = filtered.filter(

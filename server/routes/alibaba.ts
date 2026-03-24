@@ -11,6 +11,13 @@ import { RequestHandler } from "express";
  * API Documentation: https://tmapi.top/docs
  */
 
+import {
+  buildFallbackImages,
+  getCategoryKeywords,
+  inferCategoryFromText,
+  normalizeCategory,
+} from "@shared/catalog";
+
 // TMAPI API endpoint - use api.tmapi.top not tmapi.top
 const TMAPI_BASE_URL = "http://api.tmapi.top";
 // Support both TMAPI_TOKEN and VITE_TMAPI_API_TOKEN environment variables
@@ -66,6 +73,38 @@ function proxifyImageUrls(images: any[]): string[] {
       }
       return finalImg;
     });
+}
+
+function resolveCategory(item: any, requestedCategory?: string, keyword?: string) {
+  const directCategory =
+    item.category ||
+    item.category_name ||
+    item.cat_name ||
+    item.mainCategory ||
+    item.product_category ||
+    requestedCategory ||
+    "";
+
+  const normalized = normalizeCategory(directCategory);
+  if (normalized !== "other") {
+    return normalized;
+  }
+
+  const inferred = inferCategoryFromText(
+    `${item.title || item.subject || item.name || ""} ${keyword || ""}`,
+  );
+  return inferred !== "other" ? inferred : normalizeCategory(requestedCategory);
+}
+
+function buildProductImages(
+  images: string[],
+  category: string,
+  seed: string,
+  galleryCount = 3,
+) {
+  const proxied = proxifyImageUrls(images);
+  if (proxied.length > 0) return proxied;
+  return buildFallbackImages(category, seed, galleryCount);
 }
 
 // Helper function to make tmapi.top API requests
@@ -149,10 +188,12 @@ interface AlibabaProduct {
   };
   description?: string;
   specifications?: Record<string, string>;
+  category?: string;
 }
 
 interface SearchParams {
   keyword: string;
+  category?: string;
   pageNo?: number;
   pageSize?: number;
   sortBy?: "price_asc" | "price_desc" | "relevance";
@@ -178,6 +219,7 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
   try {
     const {
       keyword,
+      category,
       pageNo = 1,
       pageSize = 20,
       sortBy,
@@ -189,9 +231,15 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: "keyword is required" });
     }
 
+    const requestedCategory = normalizeCategory(category);
+    const categoryKeywords = getCategoryKeywords(requestedCategory).slice(0, 2);
+    const searchKeyword = category
+      ? `${keyword} ${categoryKeywords.join(" ")}`.trim()
+      : keyword;
+
     // Call tmapi.top API for 1688 product search
     const params: Record<string, any> = {
-      keyword: keyword,
+      keyword: searchKeyword,
       page: pageNo,
       page_size: pageSize,
     };
@@ -208,7 +256,7 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
       params.sort = "default";
     }
 
-    const cacheKey = `search_${JSON.stringify(params)}`;
+    const cacheKey = `search_${JSON.stringify({ ...params, category: requestedCategory })}`;
     const cachedResponse = getFromCache(searchCache, cacheKey, CACHE_CONFIG.SEARCH_TTL);
     if (cachedResponse) {
       console.log(`[CACHE] Hit for search: ${keyword}`);
@@ -222,18 +270,15 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
       (item: any) => {
         // ID mapping
         const productId = item.item_id || item.itemId || item.offerId || item.productId || item.id;
+        const title = item.title || item.subject || item.name || "Product";
+        const productCategory = resolveCategory(item, requestedCategory, searchKeyword);
 
-        // Image mapping - search results usually have 'img' (single URL)
-        let imageList: string[] = [];
-        if (item.img) {
-          imageList = [item.img];
-        } else if (item.imageList && Array.isArray(item.imageList)) {
-          imageList = item.imageList;
-        } else if (item.picUrl || item.pic_url || item.image || item.mainImage) {
-          imageList = [item.picUrl || item.pic_url || item.image || item.mainImage];
-        }
-
-        const proxiedImages = proxifyImageUrls(imageList);
+        const images = buildProductImages(
+          [item.img || item.picUrl || item.pic_url || item.image || item.mainImage].filter(Boolean),
+          productCategory,
+          String(productId),
+          3,
+        );
 
         // Price mapping - search results often have 'price' or 'price_info.price'
         let price = parseFloat(item.price || item.minPrice || "0");
@@ -256,11 +301,11 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
 
         return {
           id: String(productId),
-          name: item.title || item.subject || item.name || "Product",
+          name: title,
           price: price,
           originalPrice: originalPrice,
-          unit: item.offer_unit || "piece",
-          images: proxiedImages,
+          unit: item.offer_unit || item.unit || "piece",
+          images,
           rating: productRating,
           reviews: salesCount,
           seller: {
@@ -269,6 +314,9 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
             rating: item.shop_info?.star_score || item.rating || 4.5,
           },
           minOrder: item.quantity_begin || item.minOrder || 1,
+          stock: parseInt(item.stock || item.quantity || 0),
+          category: productCategory,
+          description: item.description || `Wholesale ${title.toLowerCase()} sourced from 1688.`,
           logistics: {
             deliveryDays: 15,
             shippingCost: 5,
@@ -277,12 +325,17 @@ export const searchAlibabaProducts: RequestHandler = async (req, res) => {
       },
     );
 
+    const filteredProducts = category
+      ? products.filter((product) => normalizeCategory(product.category) === requestedCategory)
+      : products;
+
     const result = {
       success: true,
-      data: products,
-      total: response.data?.totalCount || 0,
+      data: filteredProducts,
+      total: response.data?.totalCount || filteredProducts.length,
       pageNo,
       pageSize,
+      categories: category ? [requestedCategory] : undefined,
     };
 
     setToCache(searchCache, cacheKey, result);
@@ -726,16 +779,14 @@ export const proxyImage: RequestHandler = async (req, res) => {
  */
 export const getTopProducts: RequestHandler = async (req, res) => {
   try {
-    // Search for popular products with high ratings
-    // We'll search for generic popular categories and get the top results
-    const keywords = [
-      "wholesale electronics",
-      "popular gadgets",
-      "best sellers",
-    ];
-    const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
+    const requestedCategory = normalizeCategory((req.query.category as string) || "");
+    const categoryKeywords = requestedCategory !== "other"
+      ? getCategoryKeywords(requestedCategory)
+      : ["wholesale electronics", "popular gadgets", "best sellers"];
+    const randomKeyword = categoryKeywords[Math.floor(Math.random() * categoryKeywords.length)] || categoryKeywords[0];
+    const searchKeyword = randomKeyword;
 
-    const cacheKey = `top_products_${randomKeyword}`;
+    const cacheKey = `top_products_${requestedCategory || "all"}_${randomKeyword}`;
     const cachedResponse = getFromCache(topProductsCache, cacheKey, CACHE_CONFIG.TOP_PRODUCTS_TTL);
     if (cachedResponse) {
       console.log(`[CACHE] Hit for top products: ${randomKeyword}`);
@@ -754,18 +805,15 @@ export const getTopProducts: RequestHandler = async (req, res) => {
       (item: any) => {
         // ID mapping
         const productId = item.item_id || item.itemId || item.offerId || item.productId || item.id;
+        const title = item.title || item.subject || item.name || "Product";
+        const productCategory = resolveCategory(item, requestedCategory, searchKeyword);
 
-        // Image mapping - search results usually have 'img' (single URL)
-        let imageList: string[] = [];
-        if (item.img) {
-          imageList = [item.img];
-        } else if (item.imageList && Array.isArray(item.imageList)) {
-          imageList = item.imageList;
-        } else if (item.picUrl || item.pic_url || item.image || item.mainImage) {
-          imageList = [item.picUrl || item.pic_url || item.image || item.mainImage];
-        }
-
-        const proxiedImages = proxifyImageUrls(imageList);
+        const images = buildProductImages(
+          [item.img || item.picUrl || item.pic_url || item.image || item.mainImage].filter(Boolean),
+          productCategory,
+          String(productId),
+          3,
+        );
 
         // Price mapping - search results often have 'price' or 'price_info.price'
         let price = parseFloat(item.price || item.minPrice || "0");
@@ -788,11 +836,11 @@ export const getTopProducts: RequestHandler = async (req, res) => {
 
         return {
           id: String(productId),
-          name: item.title || item.subject || item.name || "Product",
+          name: title,
           price: price,
           originalPrice: originalPrice,
-          unit: item.offer_unit || "piece",
-          images: proxiedImages,
+          unit: item.offer_unit || item.unit || "piece",
+          images,
           rating: productRating,
           reviews: salesCount,
           seller: {
@@ -801,6 +849,9 @@ export const getTopProducts: RequestHandler = async (req, res) => {
             rating: item.shop_info?.star_score || item.rating || 4.5,
           },
           minOrder: item.quantity_begin || item.minOrder || 1,
+          stock: parseInt(item.stock || item.quantity || 0),
+          category: productCategory,
+          description: item.description || `Wholesale ${title.toLowerCase()} sourced from 1688.`,
           logistics: {
             deliveryDays: 15,
             shippingCost: 5,
@@ -811,7 +862,10 @@ export const getTopProducts: RequestHandler = async (req, res) => {
 
     const result = {
       success: true,
-      data: products.slice(0, 20), // Ensure exactly 20 products
+      data: products.slice(0, 20).map((product) => ({
+        ...product,
+        category: requestedCategory !== "other" ? requestedCategory : product.category,
+      })),
     };
 
     setToCache(topProductsCache, cacheKey, result);

@@ -29,10 +29,12 @@ interface AlibabaProduct {
   };
   description?: string;
   specifications?: Record<string, string>;
+  category?: string;
 }
 
 interface SearchParams {
   keyword: string;
+  category?: string;
   pageNo?: number;
   pageSize?: number;
   sortBy?: "price_asc" | "price_desc" | "relevance";
@@ -54,12 +56,15 @@ export function useAlibaba() {
   const [error, setError] = useState<string | null>(null);
 
   const getTopProducts = useCallback(
-    async (): Promise<AlibabaProduct[]> => {
+    async (category?: string): Promise<AlibabaProduct[]> => {
       setLoading(true);
       setError(null);
       console.log("[useAlibaba] Fetching top products...");
       try {
-        const response = await fetch("/api/alibaba/top-products");
+        const endpoint = category
+          ? `/api/alibaba/top-products?category=${encodeURIComponent(category)}`
+          : "/api/alibaba/top-products";
+        const response = await fetch(endpoint);
 
         if (!response.ok) {
           console.error("[useAlibaba] Fetch failed:", response.status, response.statusText);
