@@ -8,6 +8,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useAlibaba } from "@/hooks/useAlibaba";
 import { useEffect, useState } from "react";
 import { CATEGORY_CATALOG } from "@shared/catalog";
+import CategorySlider from "@/components/CategorySlider";
 
 interface AlibabaProductForDisplay {
   id: string;
@@ -87,37 +88,13 @@ export default function Index() {
       </GlassCard>
 
       {/* Categories */}
-      <section id="categories" className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2
-            className="text-lg font-semibold"
-            style={{ fontFamily: "Poppins, Inter, sans-serif" }}
-          >
-            Shop by category
-          </h2>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {categories.map((cat) => (
-            <RouterLink
-              key={cat.id}
-              to={`/marketplace?category=${cat.id}`}
-              className={`p-4 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-white/20 hover:border-primary/40 hover:bg-gradient-to-br hover:from-primary/20 hover:to-accent/20 transition ${
-                cat.id === "dishes"
-                  ? "flex flex-col justify-center items-center"
-                  : "text-center"
-              }`}
-              style={
-                cat.id === "electronics"
-                  ? { borderRadius: "12", fontWeight: "40px" }
-                  : undefined
-              }
-            >
-              <div className="text-3xl mb-2">{cat.icon}</div>
-              <div className="text-sm font-medium">{cat.label}</div>
-            </RouterLink>
-          ))}
-        </div>
-      </section>
+      <CategorySlider
+        title="Shop by category"
+        subtitle="Swipe left or right to discover more product groups"
+        categories={categories}
+        onSelect={(catId) => navigate(`/marketplace?category=${catId}`)}
+        onClear={() => navigate("/marketplace")}
+      />
 
       {/* Featured Products */}
       <section className="space-y-3">

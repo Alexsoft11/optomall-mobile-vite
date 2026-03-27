@@ -1,5 +1,5 @@
 import GlassCard from "@/components/GlassCard";
-import { ShoppingCart, Heart, X, Loader2 } from "lucide-react";
+import { ShoppingCart, Heart, Loader2 } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { products as fallbackProducts } from "@/data/products";
@@ -8,6 +8,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAlibaba } from "@/hooks/useAlibaba";
 import { CATEGORY_CATALOG, getCategoryKeywords, normalizeCategory } from "@shared/catalog";
+import CategorySlider from "@/components/CategorySlider";
 
 export default function Marketplace() {
   const navigate = useNavigate();
@@ -155,39 +156,17 @@ export default function Marketplace() {
       </div>
 
       {/* Category Filter Tabs */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium">Categories</h3>
-          {selectedCategory && (
-            <button
-              onClick={() => {
-                setSelectedCategory("");
-                searchParams.delete("category");
-                setSearchParams(searchParams);
-              }}
-              className="text-xs text-primary hover:text-primary/80 flex items-center gap-1"
-            >
-              <X className="size-3" /> Clear
-            </button>
-          )}
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => handleCategoryToggle(cat.id)}
-              className={`p-3 rounded-lg text-center transition ${
-                selectedCategory === cat.id
-                  ? "bg-primary text-primary-foreground border border-primary"
-                  : "bg-white/70 dark:bg-white/10 border border-white/20 hover:border-primary/40"
-              }`}
-            >
-              <div className="text-lg mb-1">{cat.icon}</div>
-              <div className="text-xs font-medium">{cat.label}</div>
-            </button>
-          ))}
-        </div>
-      </div>
+      <CategorySlider
+        categories={categories}
+        activeCategory={selectedCategory || undefined}
+        onSelect={handleCategoryToggle}
+        onClear={() => {
+          setSelectedCategory("");
+          searchParams.delete("category");
+          setSearchParams(searchParams);
+        }}
+        subtitle="Swipe to browse more categories"
+      />
 
       {/* Sorting */}
       <div className="flex items-center gap-2">

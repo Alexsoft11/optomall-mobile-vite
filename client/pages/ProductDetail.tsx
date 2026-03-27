@@ -72,6 +72,39 @@ export default function ProductDetail() {
     return [...mainImages, ...detailImages].filter(Boolean);
   }, [product, isDescExpanded]);
 
+  const selectedVariantLabels = useMemo(() => {
+    if (!product?.skuProps || product.skuProps.length === 0) return [];
+
+    return product.skuProps
+      .map((prop: any) => {
+        const selectedId = selectedProps[prop.name];
+        if (!selectedId) return null;
+
+        const selectedValue = prop.values?.find((value: any) => String(value.id) === String(selectedId));
+        return selectedValue ? `${prop.name}: ${selectedValue.name}` : null;
+      })
+      .filter(Boolean) as string[];
+  }, [product, selectedProps]);
+
+  const maxPurchaseQuantity = useMemo(() => {
+    const knownStocks = [currentSku?.stock, displayStock, product?.stock].filter(
+      (value): value is number => typeof value === "number" && value > 0,
+    );
+    return knownStocks.length > 0 ? Math.min(...knownStocks) : null;
+  }, [currentSku, displayStock, product]);
+
+  const deliverySummary = useMemo(() => {
+    if (!product?.logistics) return null;
+    return `${product.logistics.deliveryDays} days • Shipping ${convertPrice(product.logistics.shippingCost)}`;
+  }, [product, convertPrice]);
+
+  const visibleSpecifications = useMemo(() => {
+    const specs = product?.specifications || {};
+    return Object.entries(specs)
+      .filter(([key, value]) => Boolean(value) && value !== "N/A" && key !== "category")
+      .slice(0, 8);
+  }, [product]);
+
   // Helper to calculate price based on quantity (Tier Pricing)
   const calculateTierPrice = useCallback((qty: number, basePrice: number, levels: any[]) => {
     if (!levels || levels.length === 0) return basePrice;
@@ -454,20 +487,36 @@ export default function ProductDetail() {
                 {convertPrice(product.originalPrice)}
               </div>
             )}
-            <div className="text-xs text-foreground/70 mt-1">
-              Stock:{" "}
-              {displayStock > 0 ? (
-                <span className="text-green-500 font-medium">{displayStock} available</span>
-              ) : displayStock === 0 && product.skus?.length > 0 && !currentSku ? (
-                <span className="text-amber-500 font-medium">Select options</span>
-              ) : (
-                <span className="text-destructive font-medium">Out of stock</span>
+            <div className="text-xs text-foreground/70 mt-1 space-y-1">
+              <div>
+                Stock: {" "}
+                {maxPurchaseQuantity !== null ? (
+                  maxPurchaseQuantity > 0 ? (
+                    <span className="text-green-500 font-medium">{maxPurchaseQuantity} available</span>
+                  ) : (
+                    <span className="text-destructive font-medium">Out of stock</span>
+                  )
+                ) : product.skus?.length > 0 && !currentSku ? (
+                  <span className="text-amber-500 font-medium">Select color / size to see stock</span>
+                ) : (
+                  <span className="text-foreground/60 font-medium">Stock data not provided</span>
+                )}
+              </div>
+              {deliverySummary && (
+                <div className="text-foreground/60">
+                  Delivery: <span className="font-medium text-foreground">{deliverySummary}</span>
+                </div>
+              )}
+              {product.skus?.length > 0 && (
+                <div className="text-foreground/60">
+                  Variant price updates when you choose size or color.
+                </div>
               )}
             </div>
           </div>
           <div className="text-right">
             <div className="text-xs text-foreground/70 mb-2">Quantity</div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 justify-end">
               <button
                 onClick={() => setQuantity(Math.max(product.minOrder || 1, quantity - 1))}
                 className="size-8 rounded-lg bg-white/70 dark:bg-white/10 border border-white/20 hover:border-primary/40 flex items-center justify-center"
@@ -476,19 +525,22 @@ export default function ProductDetail() {
               </button>
               <div className="w-12 text-center font-semibold">{quantity}</div>
               <button
-                onClick={() => setQuantity(Math.max(product.minOrder || 1, Math.min(displayStock || 9999, quantity + 1)))}
-                disabled={displayStock > 0 && quantity >= displayStock}
+                onClick={() => setQuantity(Math.max(product.minOrder || 1, Math.min((maxPurchaseQuantity ?? 9999), quantity + 1)))}
+                disabled={maxPurchaseQuantity !== null && quantity >= maxPurchaseQuantity}
                 className="size-8 rounded-lg bg-white/70 dark:bg-white/10 border border-white/20 hover:border-primary/40 flex items-center justify-center disabled:opacity-30"
               >
                 <Plus className="size-4" />
               </button>
+            </div>
+            <div className="mt-2 text-[11px] text-foreground/50">
+              {product.minOrder ? `Min order ${product.minOrder} ${product.unit || "piece"}` : ""}
             </div>
           </div>
         </GlassCard>
 
         {/* Seller Info */}
         <GlassCard className="p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
               <div className="text-xs text-foreground/70 mb-1">Sold by</div>
               <div className="font-medium">
@@ -506,42 +558,97 @@ export default function ProductDetail() {
           </div>
         </GlassCard>
 
+        {selectedVariantLabels.length > 0 && (
+          <GlassCard className="p-4">
+            <h3 className="text-sm font-medium mb-3">Chosen options</h3>
+            <div className="flex flex-wrap gap-2">
+              {selectedVariantLabels.map((label) => (
+                <span
+                  key={label}
+                  className="px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium"
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+          </GlassCard>
+        )}
+
+        {(product.logistics || product.weight || product.volume || visibleSpecifications.length > 0) && (
+          <GlassCard className="p-4 space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-medium">TMAPI product data</h3>
+              {deliverySummary && (
+                <span className="text-xs px-2 py-1 rounded-full bg-accent/15 text-accent font-medium">
+                  {deliverySummary}
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              {product.weight && (
+                <div className="p-3 rounded-xl bg-white/60 dark:bg-white/5 border border-white/10">
+                  <div className="text-[11px] text-foreground/50 uppercase">Weight</div>
+                  <div className="font-medium mt-1">{product.weight}</div>
+                </div>
+              )}
+              {product.volume && (
+                <div className="p-3 rounded-xl bg-white/60 dark:bg-white/5 border border-white/10">
+                  <div className="text-[11px] text-foreground/50 uppercase">Volume</div>
+                  <div className="font-medium mt-1">{product.volume}</div>
+                </div>
+              )}
+              {product.minOrder && (
+                <div className="p-3 rounded-xl bg-white/60 dark:bg-white/5 border border-white/10">
+                  <div className="text-[11px] text-foreground/50 uppercase">Min order</div>
+                  <div className="font-medium mt-1">{product.minOrder} {product.unit || "piece"}</div>
+                </div>
+              )}
+              {product.stock !== undefined && (
+                <div className="p-3 rounded-xl bg-white/60 dark:bg-white/5 border border-white/10">
+                  <div className="text-[11px] text-foreground/50 uppercase">API stock</div>
+                  <div className="font-medium mt-1">{product.stock}</div>
+                </div>
+              )}
+            </div>
+
+            {visibleSpecifications.length > 0 && (
+              <div className="space-y-2">
+                <div className="text-xs font-medium uppercase tracking-wider text-foreground/50">More specs</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {visibleSpecifications.map(([key, value]) => (
+                    <div key={`spec-${key}`} className="flex justify-between gap-3 p-3 rounded-xl bg-white/60 dark:bg-white/5 border border-white/10 text-sm">
+                      <span className="text-foreground/55 capitalize">{key}</span>
+                      <span className="font-medium text-right">{String(value)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </GlassCard>
+        )}
+
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={handleAddToCart}
-            disabled={!isAllPropsSelected || (product.skus?.length > 0 && !currentSku) || (displayStock === 0 && product.skus?.length > 0)}
+            disabled={!isAllPropsSelected || (product.skus?.length > 0 && !currentSku) || (maxPurchaseQuantity === 0 && product.skus?.length > 0)}
             className="h-12 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed"
           >
             <ShoppingCart className="size-5" />
-            {!isAllPropsSelected ? "Select options" : (displayStock === 0 && product.skus?.length > 0 && currentSku ? "Sold Out" : "Add to cart")}
+            {!isAllPropsSelected ? "Select options" : (maxPurchaseQuantity === 0 && product.skus?.length > 0 && currentSku ? "Sold Out" : "Add to cart")}
           </button>
           <button
-            disabled={!isAllPropsSelected || (product.skus?.length > 0 && !currentSku) || (displayStock === 0 && product.skus?.length > 0)}
+            disabled={!isAllPropsSelected || (product.skus?.length > 0 && !currentSku) || (maxPurchaseQuantity === 0 && product.skus?.length > 0)}
             className="h-12 rounded-lg bg-white/70 dark:bg-white/10 border border-white/20 font-medium hover:border-primary/40 transition disabled:opacity-50"
           >
             Buy now
           </button>
         </div>
 
-        {/* Specifications */}
-        {product.specifications && (
-          <GlassCard className="p-4">
-            <h3 className="font-medium mb-3">Specifications</h3>
-            <div className="space-y-2 text-sm">
-              {Object.entries(product.specifications).map(([key, value], idx) => (
-                <div key={`spec-${key}-${idx}`} className="flex justify-between border-b border-white/5 pb-1">
-                  <span className="text-foreground/60 capitalize">{key}</span>
-                  <span className="font-medium">{String(value)}</span>
-                </div>
-              ))}
-            </div>
-          </GlassCard>
-        )}
-
         {/* Shipping Info */}
         <GlassCard className="p-4">
-          <h3 className="font-medium mb-3">Shipping & Returns</h3>
+          <h3 className="font-medium mb-3">Shipping & returns</h3>
           <div className="space-y-3 text-sm">
             {(product.weight || product.volume) && (
               <div className="flex gap-4 pb-2 border-b border-white/5">
@@ -562,9 +669,11 @@ export default function ProductDetail() {
             <div className="flex items-start gap-3">
               <span className="text-primary font-semibold mt-0.5">📦</span>
               <div>
-                <div className="font-medium">Free shipping</div>
+                <div className="font-medium">{product.logistics ? "Calculated shipping" : "Free shipping"}</div>
                 <div className="text-foreground/70 text-xs">
-                  On orders over $50, typically arrives in 10-30 days
+                  {product.logistics
+                    ? `TMAPI estimate shows ${deliverySummary || "delivery is available"}`
+                    : "On orders over $50, typically arrives in 10-30 days"}
                 </div>
               </div>
             </div>

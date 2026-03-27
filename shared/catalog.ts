@@ -101,7 +101,7 @@ export function buildFallbackImages(category: string, seed: string, count = 3): 
         <circle cx="150" cy="650" r="180" fill="rgba(255,255,255,0.08)" />
         <text x="50%" y="45%" text-anchor="middle" font-family="Arial, sans-serif" font-size="120">${icon}</text>
         <text x="50%" y="58%" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="42" fill="white">${label}</text>
-        <text x="50%" y="65%" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="rgba(255,255,255,0.92)">Alibaba / 1688 fallback image</text>
+        <text x="50%" y="65%" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="rgba(255,255,255,0.92)">Product preview</text>
       </svg>
     `;
     return svgToDataUri(svg.replace(/\s+/g, " ").trim());

@@ -161,4 +161,11 @@
       0 0 0 6px hsla(var(--glow), 0.15),
       0 0 30px hsla(var(--glow), 0.25);
   }
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
