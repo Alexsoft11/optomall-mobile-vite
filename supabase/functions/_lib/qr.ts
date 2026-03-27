@@ -12,6 +12,6 @@ export async function uploadQrToStorage(bucket: string, filePath: string, imageB
   // Upload binary image buffer to Supabase storage using service role
   const { data, error } = await supabaseAdmin.storage.from(bucket).upload(filePath, imageBuffer, { upsert: true });
   if (error) throw error;
-  const { publicURL } = supabaseAdmin.storage.from(bucket).getPublicUrl(filePath);
-  return publicURL;
+  const { data } = supabaseAdmin.storage.from(bucket).getPublicUrl(filePath);
+  return data.publicUrl;
 }

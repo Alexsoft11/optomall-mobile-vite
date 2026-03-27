@@ -109,8 +109,8 @@ export default function AdminProducts() {
         // If bucket doesn't exist or other error, propagate
         throw uploadError;
       }
-      const { publicURL } = supabase.storage.from("product-images").getPublicUrl(filePath);
-      return publicURL;
+      const { data } = supabase.storage.from("product-images").getPublicUrl(filePath);
+      return data.publicUrl;
     } finally {
       setUploading(false);
     }
@@ -149,7 +149,7 @@ export default function AdminProducts() {
   async function handleImageUpload(productId: number, file: File) {
     try {
       const result = await signedUpload(file, 'product-images');
-      const url = result.publicURL || result.publicUrl || result.publicUrl || result.publicURL;
+      const url = result.publicUrl || result.publicURL;
       if (!url) throw new Error('No URL returned from upload');
       const prod = items.find((p) => p.id === productId);
       const newImages = Array.isArray(prod?.images) ? [...prod!.images!, url] : [url];

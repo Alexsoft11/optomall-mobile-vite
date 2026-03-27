@@ -16,7 +16,7 @@ import {
   getCategoryKeywords,
   inferCategoryFromText,
   normalizeCategory,
-} from "@shared/catalog";
+} from "../../shared/catalog";
 
 // TMAPI API endpoint - use api.tmapi.top not tmapi.top
 const TMAPI_BASE_URL = "http://api.tmapi.top";
@@ -196,7 +196,7 @@ interface SearchParams {
   category?: string;
   pageNo?: number;
   pageSize?: number;
-  sortBy?: "price_asc" | "price_desc" | "relevance";
+  sortBy?: "price_asc" | "price_desc" | "relevance" | "sales";
   minPrice?: number;
   maxPrice?: number;
   minOrder?: number;
@@ -410,6 +410,8 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
       imageList = [mainImage];
     }
 
+    const productCategory = resolveCategory(item, undefined, item.title || item.subject || item.name);
+
     // Add description images if available (often found in 1688 details)
     let descriptionImages: string[] = [];
     if (item.desc_images && Array.isArray(item.desc_images)) {
@@ -487,7 +489,7 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
       price: price,
       originalPrice: originalPrice,
       unit: item.offer_unit || item.unit || "piece",
-      images: proxifyImageUrls(imageList),
+      images: buildProductImages(imageList, productCategory, String(actualProductId), 4),
       video: video ? (video.startsWith("//") ? `https:${video}` : video) : null,
       seller: {
         id: String(sellerId),
@@ -501,7 +503,11 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
       priceLevels: formattedPriceLevels,
       weight: item.weight || specs.weight,
       volume: item.volume || specs.volume,
-      descriptionImages: descriptionImages,
+      descriptionImages:
+        descriptionImages.length > 0
+          ? descriptionImages
+          : buildFallbackImages(productCategory, String(actualProductId), 2),
+      category: productCategory,
       logistics: {
         deliveryDays: 15,
         shippingCost: 5,

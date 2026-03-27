@@ -106,8 +106,8 @@ export default function AdminShipments() {
       const filePath = `${prefix}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9_.-]/g, "_")}`;
       const { data: uploadData, error: uploadError } = await supabase.storage.from("shipment-docs").upload(filePath, file, { upsert: false });
       if (uploadError) throw uploadError;
-      const { publicURL } = supabase.storage.from("shipment-docs").getPublicUrl(filePath);
-      return publicURL;
+      const { data } = supabase.storage.from("shipment-docs").getPublicUrl(filePath);
+      return data.publicUrl;
     } finally {
       setUploading(false);
     }

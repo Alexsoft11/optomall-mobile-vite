@@ -37,7 +37,7 @@ interface SearchParams {
   category?: string;
   pageNo?: number;
   pageSize?: number;
-  sortBy?: "price_asc" | "price_desc" | "relevance";
+  sortBy?: "price_asc" | "price_desc" | "relevance" | "sales";
   minPrice?: number;
   maxPrice?: number;
 }

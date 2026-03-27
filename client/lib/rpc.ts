@@ -27,17 +27,9 @@ export async function generateQr(orderId: number) {
   // Dev mock: if running in dev and FUNCTIONS_URL is not configured, return a simple SVG data URL as QR placeholder
   const isDev = Boolean(import.meta.env.DEV);
   if (isDev && !FUNCTIONS_URL) {
-    // generate QR client-side using a small CDN ESM build of qrcode
-    try {
-      const QR = await import('https://cdn.skypack.dev/qrcode');
-      const dataUrl = await QR.toDataURL(JSON.stringify({ order_id: orderId }), { errorCorrectionLevel: 'M', width: 600 });
-      return { qr_code_url: dataUrl, qr: dataUrl };
-    } catch (e) {
-      // fallback to simple SVG if CDN import fails
-      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600'><rect width='100%' height='100%' fill='#fff'/><text x='50%' y='50%' font-size='28' dominant-baseline='middle' text-anchor='middle' fill='#000'>QR:${String(orderId)}</text></svg>`;
-      const dataUrl = `data:image/svg+xml;base64,${btoa(svg)}`;
-      return { qr_code_url: dataUrl, qr: dataUrl };
-    }
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'><rect width='100%' height='100%' rx='32' fill='#ffffff'/><rect x='36' y='36' width='528' height='528' rx='24' fill='none' stroke='#111827' stroke-width='12' stroke-dasharray='20 16'/><text x='50%' y='45%' font-size='36' font-family='Arial, sans-serif' font-weight='700' dominant-baseline='middle' text-anchor='middle' fill='#111827'>QR Preview</text><text x='50%' y='53%' font-size='24' font-family='Arial, sans-serif' dominant-baseline='middle' text-anchor='middle' fill='#374151'>Order #${String(orderId)}</text><text x='50%' y='61%' font-size='18' font-family='Arial, sans-serif' dominant-baseline='middle' text-anchor='middle' fill='#6b7280'>Enable Edge Function for a real QR code</text></svg>`;
+    const dataUrl = `data:image/svg+xml;base64,${btoa(svg)}`;
+    return { qr_code_url: dataUrl, qr: dataUrl };
   }
 
   return invokeOrFetch('generate-qr', { order_id: orderId });
@@ -58,7 +50,7 @@ export async function signedUpload(file: File, bucket = 'product-images') {
   const isDev = Boolean(import.meta.env.DEV);
   if (isDev && !FUNCTIONS_URL) {
     // Use public placeholder in /public/placeholder.svg
-    return { publicURL: '/placeholder.svg', path: `mock/${Date.now()}_${file.name}` };
+    return { publicUrl: '/placeholder.svg', publicURL: '/placeholder.svg', path: `mock/${Date.now()}_${file.name}` };
   }
 
   // Try to use the Edge function; if not available, use other fallbacks
@@ -91,10 +83,10 @@ export async function signedUpload(file: File, bucket = 'product-images') {
 
     // Final fallback: attempt direct client-side upload to storage (requires anon key writes enabled)
     const filePath = `${bucket}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`;
-    const { data, error } = await supabase.storage.from(bucket).upload(filePath, file, { upsert: true });
+    const { error } = await supabase.storage.from(bucket).upload(filePath, file, { upsert: true });
     if (error) throw error;
-    const { publicURL } = supabase.storage.from(bucket).getPublicUrl(filePath);
-    return { publicURL };
+    const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(filePath);
+    return { publicUrl: publicData.publicUrl, publicURL: publicData.publicUrl };
   } catch (err) {
     throw err;
   }

@@ -66,6 +66,12 @@ export default function ProductDetail() {
     return product.skuProps.every((prop: any) => !!selectedProps[prop.name]);
   }, [product, selectedProps]);
 
+  const galleryImages = useMemo(() => {
+    const mainImages = product?.images || [];
+    const detailImages = isDescExpanded ? product?.descriptionImages || [] : [];
+    return [...mainImages, ...detailImages].filter(Boolean);
+  }, [product, isDescExpanded]);
+
   // Helper to calculate price based on quantity (Tier Pricing)
   const calculateTierPrice = useCallback((qty: number, basePrice: number, levels: any[]) => {
     if (!levels || levels.length === 0) return basePrice;
@@ -224,8 +230,8 @@ export default function ProductDetail() {
         <div className="relative group">
           <div className="overflow-hidden" ref={emblaRef}>
             <div className="flex h-80">
-              {product.images && product.images.map((img: string, idx: number) => (
-                <div key={idx} className="flex-[0_0_100%] min-w-0 relative h-full">
+              {galleryImages.map((img: string, idx: number) => (
+                <div key={`gallery-${idx}-${img.substring(0, 20)}`} className="flex-[0_0_100%] min-w-0 relative h-full">
                   {product.video && idx === 0 ? (
                     <video
                       src={product.video}
@@ -246,7 +252,7 @@ export default function ProductDetail() {
           </div>
 
           {/* Navigation Arrows */}
-          {product.images && product.images.length > 1 && (
+          {galleryImages.length > 1 && (
             <>
               <button
                 onClick={scrollPrev}
@@ -280,9 +286,9 @@ export default function ProductDetail() {
           </button>
 
           {/* Pagination Dots */}
-          {product.images && product.images.length > 1 && (
+          {galleryImages.length > 1 && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-black/20 px-2 py-1.5 rounded-full backdrop-blur-sm">
-              {product.images.map((_: any, idx: number) => (
+              {galleryImages.map((_: any, idx: number) => (
                 <div
                   key={idx}
                   className={`size-1.5 rounded-full transition-all ${
@@ -294,9 +300,9 @@ export default function ProductDetail() {
           )}
         </div>
 
-        {product.images && product.images.length > 1 && (
+        {galleryImages.length > 1 && (
           <div className="p-3 flex gap-2 border-t border-white/10 overflow-x-auto bg-card/50 no-scrollbar">
-            {product.images.map((img: string, idx: number) => (
+            {galleryImages.map((img: string, idx: number) => (
               <button
                 key={`thumb-${idx}-${img.substring(0, 20)}`}
                 onClick={() => scrollTo(idx)}
@@ -338,22 +344,6 @@ export default function ProductDetail() {
             className={`text-sm text-foreground/70 mt-2 overflow-hidden transition-all duration-300 ${isDescExpanded ? "" : "line-clamp-3"}`}
             dangerouslySetInnerHTML={{ __html: product.description }}
           />
-          {isDescExpanded && product.descriptionImages && product.descriptionImages.length > 0 && (
-            <div className="mt-4 space-y-4">
-              <h4 className="text-xs font-bold text-foreground/50 uppercase">Product Gallery</h4>
-              <div className="flex flex-col gap-2">
-                {product.descriptionImages.map((img: string, idx: number) => (
-                  <img
-                    key={idx}
-                    src={img}
-                    loading="lazy"
-                    alt={`Description ${idx + 1}`}
-                    className="w-full rounded-lg bg-white/5"
-                  />
-                ))}
-              </div>
-            </div>
-          )}
           {((product.description && product.description.length > 150) || (product.descriptionImages && product.descriptionImages.length > 0)) && (
             <button
               onClick={() => setIsDescExpanded(!isDescExpanded)}

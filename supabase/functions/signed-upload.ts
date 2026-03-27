@@ -25,8 +25,8 @@ export default async function handler(req: any, res: any) {
       const filePath = `${bucket}/${Date.now()}_${file.originalFilename || file.name}`.replace(/[^a-zA-Z0-9_./-]/g, '_');
       const { data, error: uploadErr } = await supabaseAdmin.storage.from(bucket).upload(filePath, buffer, { upsert: true });
       if (uploadErr) return res.status(500).json({ error: uploadErr.message || uploadErr });
-      const { publicURL } = supabaseAdmin.storage.from(bucket).getPublicUrl(filePath);
-      return res.json({ publicURL });
+      const { data } = supabaseAdmin.storage.from(bucket).getPublicUrl(filePath);
+      return res.json({ publicUrl: data.publicUrl, publicURL: data.publicUrl });
     });
   } catch (err: any) {
     console.error(err);

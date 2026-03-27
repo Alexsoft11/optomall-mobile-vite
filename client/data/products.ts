@@ -2,7 +2,20 @@ export interface Product {
   id: number;
   name: string;
   price: number; // USD price
-  category: "electronics" | "clothing" | "dishes" | "sports" | "other";
+  category:
+    | "electronics"
+    | "clothing"
+    | "dishes"
+    | "sports"
+    | "home"
+    | "beauty"
+    | "toys"
+    | "automotive"
+    | "tools"
+    | "stationery"
+    | "baby"
+    | "pet"
+    | "other";
   description: string;
   images: string[];
   rating?: number;
@@ -287,5 +300,125 @@ export const products: Product[] = [
     rating: 4.7,
     reviews: 612,
     seller: "Recovery Pro",
+  },
+
+  // Home
+  {
+    id: 21,
+    name: "Foldable Storage Box Set",
+    price: 18.49,
+    category: "home",
+    description: "Space-saving storage bins with lids, perfect for closets and shelves.",
+    images: [
+      "https://images.unsplash.com/photo-1582582494700-9f1b9e64b7aa?auto=format&fit=crop&w=800&q=80",
+    ],
+    rating: 4.5,
+    reviews: 214,
+    seller: "HomeNest",
+  },
+
+  // Beauty
+  {
+    id: 22,
+    name: "Facial Cleansing Brush",
+    price: 9.89,
+    category: "beauty",
+    description: "Soft silicone cleansing brush with waterproof design.",
+    images: [
+      "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=800&q=80",
+    ],
+    rating: 4.6,
+    reviews: 188,
+    seller: "GlowCare",
+  },
+
+  // Toys
+  {
+    id: 23,
+    name: "Wooden Puzzle Blocks",
+    price: 12.29,
+    category: "toys",
+    description: "Educational wooden blocks set for kids learning and play.",
+    images: [
+      "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&w=800&q=80",
+    ],
+    rating: 4.7,
+    reviews: 96,
+    seller: "Little Minds",
+  },
+
+  // Automotive
+  {
+    id: 24,
+    name: "Car Phone Holder Mount",
+    price: 7.99,
+    category: "automotive",
+    description: "Adjustable air vent phone holder for safe driving.",
+    images: [
+      "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80",
+    ],
+    rating: 4.4,
+    reviews: 257,
+    seller: "AutoKit",
+  },
+
+  // Tools
+  {
+    id: 25,
+    name: "Precision Screwdriver Set",
+    price: 14.59,
+    category: "tools",
+    description: "Multi-bit repair kit for electronics and household use.",
+    images: [
+      "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=800&q=80",
+    ],
+    rating: 4.8,
+    reviews: 143,
+    seller: "ToolBox Pro",
+  },
+
+  // Stationery
+  {
+    id: 26,
+    name: "A5 Spiral Notebook Pack",
+    price: 8.99,
+    category: "stationery",
+    description: "Set of 4 lined notebooks for office, school, and journaling.",
+    images: [
+      "https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=800&q=80",
+    ],
+    rating: 4.5,
+    reviews: 322,
+    seller: "PaperWave",
+  },
+
+  // Baby
+  {
+    id: 27,
+    name: "Baby Silicone Feeding Set",
+    price: 16.79,
+    category: "baby",
+    description: "Non-toxic feeding bowl, spoon and bib set for toddlers.",
+    images: [
+      "https://images.unsplash.com/photo-1515488042361-ffc3e9c1f6c0?auto=format&fit=crop&w=800&q=80",
+    ],
+    rating: 4.7,
+    reviews: 78,
+    seller: "LittleNest",
+  },
+
+  // Pet
+  {
+    id: 28,
+    name: "Pet Grooming Brush",
+    price: 6.49,
+    category: "pet",
+    description: "Gentle shedding brush for dogs and cats with ergonomic handle.",
+    images: [
+      "https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=800&q=80",
+    ],
+    rating: 4.6,
+    reviews: 129,
+    seller: "PetCare",
   },
 ];

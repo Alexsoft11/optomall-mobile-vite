@@ -47,12 +47,12 @@ export default async function handler(req: any, res: any) {
       return res.json({ qr_code_url: qrUrl });
     }
 
-    const { publicURL } = supabaseAdmin.storage.from('product-images').getPublicUrl(filePath);
+    const { data } = supabaseAdmin.storage.from('product-images').getPublicUrl(filePath);
 
     // Save to order
-    await supabaseAdmin.from('orders').update({ qr_code_url: publicURL, qr_data: payload }).eq('id', order.id);
+    await supabaseAdmin.from('orders').update({ qr_code_url: data.publicUrl, qr_data: payload }).eq('id', order.id);
 
-    return res.json({ qr_code_url: publicURL });
+    return res.json({ qr_code_url: data.publicUrl });
   } catch (err: any) {
     console.error(err);
     return res.status(500).json({ error: String(err) });
