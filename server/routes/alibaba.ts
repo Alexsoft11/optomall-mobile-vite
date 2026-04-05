@@ -75,6 +75,64 @@ function proxifyImageUrls(images: any[]): string[] {
     });
 }
 
+function extractImageUrls(value: any): string[] {
+  const result: string[] = [];
+  const seen = new Set<string>();
+
+  const push = (candidate: any) => {
+    if (!candidate) return;
+
+    if (typeof candidate === "string") {
+      const trimmed = candidate.trim();
+      if (trimmed && !seen.has(trimmed)) {
+        seen.add(trimmed);
+        result.push(trimmed);
+      }
+      return;
+    }
+
+    if (Array.isArray(candidate)) {
+      candidate.forEach(push);
+      return;
+    }
+
+    if (typeof candidate === "object") {
+      const record = candidate as Record<string, any>;
+      [
+        record.url,
+        record.src,
+        record.href,
+        record.image,
+        record.img,
+        record.picUrl,
+        record.pic_url,
+        record.thumb,
+        record.large,
+        record.medium,
+        record.small,
+      ].forEach(push);
+    }
+  };
+
+  push(value);
+  return result;
+}
+
+function extractImagesFromMarkup(value?: string | null): string[] {
+  if (!value || typeof value !== "string") return [];
+
+  const result = new Set<string>();
+  const regex = /<img[^>]+src=["']([^"']+)["']/gi;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(value))) {
+    if (match[1]) {
+      result.add(match[1]);
+    }
+  }
+
+  return Array.from(result);
+}
+
 function resolveCategory(item: any, requestedCategory?: string, keyword?: string) {
   const directCategory =
     item.category ||
@@ -97,12 +155,12 @@ function resolveCategory(item: any, requestedCategory?: string, keyword?: string
 }
 
 function buildProductImages(
-  images: string[],
+  images: any,
   category: string,
   seed: string,
   galleryCount = 3,
 ) {
-  const proxied = proxifyImageUrls(images);
+  const proxied = proxifyImageUrls(extractImageUrls(images));
   if (proxied.length > 0) return proxied;
   return buildFallbackImages(category, seed, galleryCount);
 }
@@ -397,26 +455,38 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
     const mainImage = item.img || item.pic_url || item.picUrl || item.main_img || item.image || item.mainImage || item.thumb;
 
     // Image list mapping
-    let imageList: string[] = [];
-    if (item.item_images && Array.isArray(item.item_images)) {
-      imageList = item.item_images;
-    } else if (item.pc_detail_images && Array.isArray(item.pc_detail_images)) {
-      imageList = item.pc_detail_images;
-    } else if (item.imageList && Array.isArray(item.imageList)) {
-      imageList = item.imageList;
-    } else if (item.images && Array.isArray(item.images)) {
-      imageList = item.images;
-    } else if (mainImage) {
-      imageList = [mainImage];
-    }
+    const imageList = extractImageUrls([
+      item.item_images,
+      item.pc_detail_images,
+      item.imageList,
+      item.images,
+      item.detail_images,
+      item.detailImages,
+      item.detail_pic_list,
+      item.gallery,
+      item.album,
+      mainImage,
+    ]);
 
     const productCategory = resolveCategory(item, undefined, item.title || item.subject || item.name);
 
     // Add description images if available (often found in 1688 details)
-    let descriptionImages: string[] = [];
-    if (item.desc_images && Array.isArray(item.desc_images)) {
-      descriptionImages = proxifyImageUrls(item.desc_images);
-    }
+    let descriptionImages = extractImageUrls([
+      item.desc_images,
+      item.descImages,
+      item.detail_images,
+      item.detailImages,
+      item.detail_pic_list,
+      item.pc_detail_images,
+      item.description_images,
+      item.descriptionImages,
+    ]);
+
+    descriptionImages = [
+      ...descriptionImages,
+      ...extractImagesFromMarkup(item.description_html || item.detail_html || item.descriptionHtml || item.desc_html),
+    ];
+    descriptionImages = Array.from(new Set(descriptionImages));
 
     // Video mapping
     const video = item.video || item.main_video || item.video_url;
@@ -505,7 +575,7 @@ export const getAlibabaProductDetail: RequestHandler = async (req, res) => {
       volume: item.volume || specs.volume,
       descriptionImages:
         descriptionImages.length > 0
-          ? descriptionImages
+          ? proxifyImageUrls(descriptionImages)
           : buildFallbackImages(productCategory, String(actualProductId), 2),
       category: productCategory,
       logistics: {

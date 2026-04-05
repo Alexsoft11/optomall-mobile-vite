@@ -66,11 +66,67 @@ export default function ProductDetail() {
     return product.skuProps.every((prop: any) => !!selectedProps[prop.name]);
   }, [product, selectedProps]);
 
+  const normalizeImageList = useCallback((value: unknown): string[] => {
+    const seen = new Set<string>();
+    const result: string[] = [];
+
+    const add = (candidate: unknown) => {
+      if (!candidate) return;
+
+      if (typeof candidate === "string") {
+        const trimmed = candidate.trim();
+        if (trimmed && !seen.has(trimmed)) {
+          seen.add(trimmed);
+          result.push(trimmed);
+        }
+        return;
+      }
+
+      if (Array.isArray(candidate)) {
+        candidate.forEach(add);
+        return;
+      }
+
+      if (typeof candidate === "object") {
+        const record = candidate as Record<string, unknown>;
+        [
+          record.url,
+          record.src,
+          record.href,
+          record.image,
+          record.img,
+          record.picUrl,
+          record.pic_url,
+          record.thumb,
+          record.large,
+          record.medium,
+          record.small,
+        ].forEach(add);
+      }
+    };
+
+    add(value);
+    return result;
+  }, []);
+
+  const extractImagesFromMarkup = useCallback((value?: string | null) => {
+    if (!value || typeof value !== "string") return [];
+
+    const matches = Array.from(value.matchAll(/<img[^>]+src=["']([^"']+)["']/gi), (match) => match[1]);
+    return normalizeImageList(matches);
+  }, [normalizeImageList]);
+
+  const mainGalleryImages = useMemo(() => normalizeImageList(product?.images || []), [product, normalizeImageList]);
+
+  const detailGalleryImages = useMemo(() => {
+    const rawDescriptionImages = normalizeImageList(product?.descriptionImages || []);
+    const embeddedDescriptionImages = extractImagesFromMarkup(product?.description);
+    return normalizeImageList([...rawDescriptionImages, ...embeddedDescriptionImages]);
+  }, [product, normalizeImageList, extractImagesFromMarkup]);
+
   const galleryImages = useMemo(() => {
-    const mainImages = product?.images || [];
-    const detailImages = isDescExpanded ? product?.descriptionImages || [] : [];
-    return [...mainImages, ...detailImages].filter(Boolean);
-  }, [product, isDescExpanded]);
+    return mainGalleryImages.length > 0 ? mainGalleryImages : detailGalleryImages;
+  }, [mainGalleryImages, detailGalleryImages]);
 
   const selectedVariantLabels = useMemo(() => {
     if (!product?.skuProps || product.skuProps.length === 0) return [];
@@ -126,13 +182,29 @@ export default function ProductDetail() {
 
     // Find matching SKU
     if (product.skus && product.skus.length > 0) {
-      const selectedPropIds = Object.values(selectedProps).sort().join(';');
-      const matchingSku = product.skus.find((sku: any) => {
-        // Handle different prop formats from API
-        const skuPropIds = Array.isArray(sku.props) ? sku.props.sort().join(';') : String(sku.props);
+      const selectedPropIds = Object.values(selectedProps)
+        .map((valId) => String(valId))
+        .filter(Boolean)
+        .sort();
 
-        // Simple match: if all selected props are in the SKU props
-        return Object.values(selectedProps).every(valId => skuPropIds.includes(valId));
+      const matchingSku = product.skus.find((sku: any) => {
+        const skuPropIds = Array.isArray(sku.props)
+          ? sku.props.map((propId: any) => String(propId)).filter(Boolean).sort()
+          : String(sku.props || "")
+              .split(/[;,]/)
+              .map((propId) => propId.trim())
+              .filter(Boolean)
+              .sort();
+
+        if (selectedPropIds.length === 0 || skuPropIds.length === 0) {
+          return false;
+        }
+
+        if (skuPropIds.length !== selectedPropIds.length) {
+          return false;
+        }
+
+        return selectedPropIds.every((valId) => skuPropIds.includes(valId));
       });
 
       if (matchingSku) {
@@ -142,7 +214,7 @@ export default function ProductDetail() {
 
         // Update image if SKU has one
         if (matchingSku.image) {
-          const imgIndex = product.images.indexOf(matchingSku.image);
+          const imgIndex = galleryImages.indexOf(matchingSku.image);
           if (imgIndex !== -1) {
             setSelectedImageIndex(imgIndex);
             scrollTo(imgIndex);
@@ -158,7 +230,7 @@ export default function ProductDetail() {
     setDisplayPrice(finalPrice);
     setDisplayStock(stock);
 
-  }, [selectedProps, quantity, product, calculateTierPrice, scrollTo]);
+  }, [selectedProps, quantity, product, calculateTierPrice, scrollTo, galleryImages]);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -264,7 +336,10 @@ export default function ProductDetail() {
           <div className="overflow-hidden" ref={emblaRef}>
             <div className="flex h-80">
               {galleryImages.map((img: string, idx: number) => (
-                <div key={`gallery-${idx}-${img.substring(0, 20)}`} className="flex-[0_0_100%] min-w-0 relative h-full">
+                <div
+                  key={`gallery-${idx}-${img.substring(0, 20)}`}
+                  className="flex-[0_0_100%] min-w-0 relative h-full bg-gradient-to-br from-white via-white/90 to-primary/5 dark:from-black dark:via-black/90 dark:to-primary/10"
+                >
                   {product.video && idx === 0 ? (
                     <video
                       src={product.video}
@@ -276,7 +351,8 @@ export default function ProductDetail() {
                     <img
                       src={img}
                       alt={`${product.name} - ${idx + 1}`}
-                      className="w-full h-full object-contain bg-white/50"
+                      className="w-full h-full object-contain p-2 sm:p-4"
+                      loading="eager"
                     />
                   )}
                 </div>
@@ -289,13 +365,13 @@ export default function ProductDetail() {
             <>
               <button
                 onClick={scrollPrev}
-                className="absolute left-2 top-1/2 -translate-y-1/2 size-10 rounded-full bg-white/80 dark:bg-black/50 flex items-center justify-center border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                className="absolute left-2 top-1/2 -translate-y-1/2 size-10 rounded-full bg-white/90 dark:bg-black/60 flex items-center justify-center border border-white/20 shadow-lg opacity-0 group-hover:opacity-100 transition-all z-10"
               >
                 <ChevronLeft className="size-6" />
               </button>
               <button
                 onClick={scrollNext}
-                className="absolute right-2 top-1/2 -translate-y-1/2 size-10 rounded-full bg-white/80 dark:bg-black/50 flex items-center justify-center border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                className="absolute right-2 top-1/2 -translate-y-1/2 size-10 rounded-full bg-white/90 dark:bg-black/60 flex items-center justify-center border border-white/20 shadow-lg opacity-0 group-hover:opacity-100 transition-all z-10"
               >
                 <ChevronRight className="size-6" />
               </button>
@@ -304,7 +380,7 @@ export default function ProductDetail() {
 
           <button
             onClick={() => toggleFavorite(product.id)}
-            className="absolute top-4 right-4 size-10 rounded-lg grid place-items-center bg-white/90 dark:bg-white/20 border border-white/20 hover:bg-white dark:hover:bg-white/30 z-10"
+            className="absolute top-4 right-4 size-10 rounded-xl grid place-items-center bg-white/90 dark:bg-white/20 border border-white/20 hover:bg-white dark:hover:bg-white/30 shadow-md z-10"
           >
             <Heart
               className={
@@ -314,19 +390,22 @@ export default function ProductDetail() {
               }
             />
           </button>
-          <button className="absolute top-4 left-4 size-10 rounded-lg grid place-items-center bg-white/90 dark:bg-white/20 border border-white/20 hover:bg-white dark:hover:bg-white/30 z-10">
+          <button className="absolute top-4 left-4 size-10 rounded-xl grid place-items-center bg-white/90 dark:bg-white/20 border border-white/20 hover:bg-white dark:hover:bg-white/30 shadow-md z-10">
             <Share2 className="size-5" />
           </button>
 
           {/* Pagination Dots */}
           {galleryImages.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-black/20 px-2 py-1.5 rounded-full backdrop-blur-sm">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-black/25 px-2 py-1.5 rounded-full backdrop-blur-sm">
               {galleryImages.map((_: any, idx: number) => (
-                <div
-                  key={idx}
-                  className={`size-1.5 rounded-full transition-all ${
-                    selectedImageIndex === idx ? "w-4 bg-white" : "bg-white/50"
+                <button
+                  type="button"
+                  key={`dot-${idx}`}
+                  onClick={() => scrollTo(idx)}
+                  className={`h-1.5 rounded-full transition-all ${
+                    selectedImageIndex === idx ? "w-4 bg-white" : "w-1.5 bg-white/50"
                   }`}
+                  aria-label={`Show image ${idx + 1}`}
                 />
               ))}
             </div>
@@ -334,18 +413,18 @@ export default function ProductDetail() {
         </div>
 
         {galleryImages.length > 1 && (
-          <div className="p-3 flex gap-2 border-t border-white/10 overflow-x-auto bg-card/50 no-scrollbar">
+          <div className="p-3 flex gap-2 border-t border-white/10 overflow-x-auto bg-card/60 no-scrollbar">
             {galleryImages.map((img: string, idx: number) => (
               <button
                 key={`thumb-${idx}-${img.substring(0, 20)}`}
                 onClick={() => scrollTo(idx)}
-                className={`min-w-16 size-16 rounded-lg overflow-hidden border-2 transition flex-shrink-0 relative ${
+                className={`min-w-16 size-16 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 relative ring-offset-2 ring-offset-transparent ${
                   selectedImageIndex === idx
-                    ? "border-primary"
-                    : "border-white/20"
+                    ? "border-primary ring-1 ring-primary/30"
+                    : "border-white/20 hover:border-primary/40"
                 }`}
               >
-                <img src={img} alt="" className="w-full h-full object-cover" />
+                <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
                 {product.video && idx === 0 && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                     <div className="size-6 rounded-full bg-white/80 flex items-center justify-center shadow-sm">
@@ -377,7 +456,7 @@ export default function ProductDetail() {
             className={`text-sm text-foreground/70 mt-2 overflow-hidden transition-all duration-300 ${isDescExpanded ? "" : "line-clamp-3"}`}
             dangerouslySetInnerHTML={{ __html: product.description }}
           />
-          {((product.description && product.description.length > 150) || (product.descriptionImages && product.descriptionImages.length > 0)) && (
+          {((product.description && product.description.length > 150) || detailGalleryImages.length > 0) && (
             <button
               onClick={() => setIsDescExpanded(!isDescExpanded)}
               className="text-xs text-primary font-medium mt-1 hover:underline"
@@ -385,45 +464,104 @@ export default function ProductDetail() {
               {isDescExpanded ? "Show Less" : "Read More & View Photos"}
             </button>
           )}
+          {isDescExpanded && detailGalleryImages.length > 0 && (
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-sm font-medium">Detailed photos</h3>
+                <span className="text-xs text-foreground/60">{detailGalleryImages.length} images</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {detailGalleryImages.map((img: string, idx: number) => {
+                  const mediaIndex = galleryImages.indexOf(img);
+                  return (
+                    <button
+                      key={`detail-photo-${idx}-${img.substring(0, 20)}`}
+                      type="button"
+                      onClick={() => {
+                        if (mediaIndex !== -1) {
+                          setSelectedImageIndex(mediaIndex);
+                          scrollTo(mediaIndex);
+                        }
+                      }}
+                      className="overflow-hidden rounded-xl border border-white/20 bg-white/60 dark:bg-white/5 hover:border-primary/40 transition-all"
+                    >
+                      <img
+                        src={img}
+                        alt={`${product.name} detailed view ${idx + 1}`}
+                        className="aspect-square w-full object-cover"
+                        loading="lazy"
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* SKU Selection */}
         {product.skuProps && product.skuProps.length > 0 && (
-          <div className="space-y-4">
-            {product.skuProps.map((prop: any, pIdx: number) => (
-              <div key={`prop-${prop.name}-${pIdx}`} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-sm font-medium">{prop.name}</label>
-                  {selectedProps[prop.name] && (
-                    <span className="text-xs text-primary font-medium">
-                      {prop.values.find((v: any) => v.id === selectedProps[prop.name])?.name}
-                    </span>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {prop.values.map((val: any, vIdx: number) => {
-                    const isSelected = selectedProps[prop.name] === val.id;
-                    return (
-                      <button
-                        key={`val-${val.id || vIdx}-${val.name}`}
-                        onClick={() => setSelectedProps(prev => ({ ...prev, [prop.name]: val.id }))}
-                        className={`px-3 py-2 rounded-lg border text-sm transition-all flex items-center gap-2 ${
-                          isSelected
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-white/20 bg-white/50 dark:bg-white/5 hover:border-primary/40"
-                        }`}
-                      >
-                        {val.image && (
-                          <img src={val.image} alt="" className="size-6 rounded object-cover" />
-                        )}
-                        {val.name}
-                      </button>
-                    );
-                  })}
-                </div>
+          <GlassCard className="p-4 space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold">Choose options</h3>
+                <p className="text-xs text-foreground/60 mt-0.5">Pick color, size, or other variants to update price and stock.</p>
               </div>
-            ))}
-          </div>
+              <span className="text-[11px] px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">
+                SKU
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              {product.skuProps.map((prop: any, pIdx: number) => {
+                const propName = prop.name || `Option ${pIdx + 1}`;
+                const propNameLower = String(propName).toLowerCase();
+                const isColorProp = /(color|colour|цвет|颜色|顏色)/i.test(propNameLower);
+                const isSizeProp = /(size|尺码|尺寸|length|width|height|capacity|volume|размер)/i.test(propNameLower);
+                const selectedValue = prop.values?.find((v: any) => String(v.id) === String(selectedProps[propName]));
+
+                return (
+                  <div key={`prop-${propName}-${pIdx}`} className="space-y-2">
+                    <div className="flex justify-between items-start gap-3">
+                      <div>
+                        <label className="text-sm font-medium block">{propName}</label>
+                        <div className="text-xs text-foreground/60 mt-0.5">
+                          {isColorProp ? "Choose a color" : isSizeProp ? "Choose a size" : "Choose an option"}
+                        </div>
+                      </div>
+                      {selectedValue && (
+                        <span className="text-xs text-primary font-medium">
+                          {selectedValue.name}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {prop.values.map((val: any, vIdx: number) => {
+                        const isSelected = String(selectedProps[propName]) === String(val.id);
+                        return (
+                          <button
+                            key={`val-${val.id || vIdx}-${val.name}`}
+                            onClick={() => setSelectedProps(prev => ({ ...prev, [propName]: String(val.id) }))}
+                            className={`min-h-11 px-3 py-2 rounded-2xl border text-sm transition-all flex items-center gap-2 shadow-sm ${
+                              isSelected
+                                ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/20"
+                                : "border-white/20 bg-white/70 dark:bg-white/5 hover:border-primary/40"
+                            }`}
+                          >
+                            {val.image && (
+                              <img src={val.image} alt="" className="size-6 rounded-lg object-cover ring-1 ring-black/5" />
+                            )}
+                            <span className="leading-tight">{val.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </GlassCard>
         )}
 
         {/* Tier Pricing Display */}
