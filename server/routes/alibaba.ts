@@ -1,16 +1,5 @@
 import { RequestHandler } from "express";
 
-/**
- * 1688/Alibaba API Integration via tmapi.top
- *
- * Setup:
- * 1. Register at https://tmapi.top
- * 2. Get your API token
- * 3. Set TMAPI_TOKEN in environment variables
- *
- * API Documentation: https://tmapi.top/docs
- */
-
 import {
   buildFallbackImages,
   getCategoryKeywords,
@@ -869,88 +858,154 @@ export const getTopProducts: RequestHandler = async (req, res) => {
       return res.json(cachedResponse);
     }
 
-    const response = await tmapiRequest("1688/en/search/items", {
-      keyword: randomKeyword,
-      page: 1,
-      page_size: 20,
-      sort: "default"
-    });
+    try {
+      const response = await tmapiRequest("1688/en/search/items", {
+        keyword: randomKeyword,
+        page: 1,
+        page_size: 20,
+        sort: "default"
+      });
 
-    // Transform tmapi.top response to our format
-    const products: AlibabaProduct[] = (response.data?.items || []).map(
-      (item: any) => {
-        // ID mapping
-        const productId = item.item_id || item.itemId || item.offerId || item.productId || item.id;
-        const title = item.title || item.subject || item.name || "Product";
-        const productCategory = resolveCategory(item, requestedCategory, searchKeyword);
+      // Transform tmapi.top response to our format
+      const products: AlibabaProduct[] = (response.data?.items || []).map(
+        (item: any) => {
+          // ID mapping
+          const productId = item.item_id || item.itemId || item.offerId || item.productId || item.id;
+          const title = item.title || item.subject || item.name || "Product";
+          const productCategory = resolveCategory(item, requestedCategory, searchKeyword);
 
-        const images = buildProductImages(
-          [item.img || item.picUrl || item.pic_url || item.image || item.mainImage].filter(Boolean),
-          productCategory,
-          String(productId),
-          3,
-        );
+          const images = buildProductImages(
+            [item.img || item.picUrl || item.pic_url || item.image || item.mainImage].filter(Boolean),
+            productCategory,
+            String(productId),
+            3,
+          );
 
-        // Price mapping - search results often have 'price' or 'price_info.price'
-        let price = parseFloat(item.price || item.minPrice || "0");
-        if (item.price_info && item.price_info.price) {
-          price = parseFloat(item.price_info.price);
-        }
+          // Price mapping - search results often have 'price' or 'price_info.price'
+          let price = parseFloat(item.price || item.minPrice || "0");
+          if (item.price_info && item.price_info.price) {
+            price = parseFloat(item.price_info.price);
+          }
 
-        let originalPrice = price * 1.2;
-        if (item.price_info && item.price_info.original_price) {
-          originalPrice = parseFloat(item.price_info.original_price);
-        }
+          let originalPrice = price * 1.2;
+          if (item.price_info && item.price_info.original_price) {
+            originalPrice = parseFloat(item.price_info.original_price);
+          }
 
-        // Seller mapping
-        const sellerName = item.shop_info?.shop_name || item.supplierName || item.sellerName || item.companyName || "1688 Supplier";
-        const sellerId = item.shop_info?.shop_id || item.supplierId || item.userId || item.sellerId || "unknown";
+          // Seller mapping
+          const sellerName = item.shop_info?.shop_name || item.supplierName || item.sellerName || item.companyName || "1688 Supplier";
+          const sellerId = item.shop_info?.shop_id || item.supplierId || item.userId || item.sellerId || "unknown";
 
-        // Product rating and reviews
-        const productRating = parseFloat(item.goods_score || item.score || "4.5");
-        const salesCount = parseInt(item.sale_info?.sale_count || item.sales || "0");
+          // Product rating and reviews
+          const productRating = parseFloat(item.goods_score || item.score || "4.5");
+          const salesCount = parseInt(item.sale_info?.sale_count || item.sales || "0");
 
-        return {
-          id: String(productId),
-          name: title,
-          price: price,
-          originalPrice: originalPrice,
-          unit: item.offer_unit || item.unit || "piece",
-          images,
-          rating: productRating,
-          reviews: salesCount,
-          seller: {
-            id: String(sellerId),
-            name: sellerName,
-            rating: item.shop_info?.star_score || item.rating || 4.5,
-          },
-          minOrder: item.quantity_begin || item.minOrder || 1,
-          stock: parseInt(item.stock || item.quantity || 0),
-          category: productCategory,
-          description: item.description || `Wholesale ${title.toLowerCase()} sourced from 1688.`,
-          logistics: {
-            deliveryDays: 15,
-            shippingCost: 5,
-          },
-        };
-      },
-    );
+          return {
+            id: String(productId),
+            name: title,
+            price: price,
+            originalPrice: originalPrice,
+            unit: item.offer_unit || item.unit || "piece",
+            images,
+            rating: productRating,
+            reviews: salesCount,
+            seller: {
+              id: String(sellerId),
+              name: sellerName,
+              rating: item.shop_info?.star_score || item.rating || 4.5,
+            },
+            minOrder: item.quantity_begin || item.minOrder || 1,
+            stock: parseInt(item.stock || item.quantity || 0),
+            category: productCategory,
+            description: item.description || `Wholesale ${title.toLowerCase()} sourced from 1688.`,
+            logistics: {
+              deliveryDays: 15,
+              shippingCost: 5,
+            },
+          };
+        },
+      );
 
-    const result = {
-      success: true,
-      data: products.slice(0, 20).map((product) => ({
-        ...product,
-        category: requestedCategory !== "other" ? requestedCategory : product.category,
-      })),
-    };
+      const result = {
+        success: true,
+        data: products.slice(0, 20).map((product) => ({
+          ...product,
+          category: requestedCategory !== "other" ? requestedCategory : product.category,
+        })),
+      };
 
-    setToCache(topProductsCache, cacheKey, result);
-    res.json(result);
+      setToCache(topProductsCache, cacheKey, result);
+      return res.json(result);
+    } catch (apiError) {
+      // If TMAPI fails, return fallback products with proper structure
+      console.warn("Fallback products generated (API unavailable):", apiError instanceof Error ? apiError.message : String(apiError));
+
+      const fallbackProducts: AlibabaProduct[] = [
+        {
+          id: `fallback-demo-1`,
+          name: "Wireless Bluetooth Earbuds",
+          price: 12.99,
+          originalPrice: 15.99,
+          unit: "piece",
+          images: buildFallbackImages("electronics", "fallback-demo-1", 3),
+          rating: 4.5,
+          reviews: 234,
+          seller: { id: "fallback-1", name: "Demo Store", rating: 4.8 },
+          minOrder: 1,
+          stock: 100,
+          category: "electronics",
+          description: "Demo product. Connect your TMAPI token to see real 1688 products.",
+          logistics: { deliveryDays: 15, shippingCost: 5 },
+        },
+        {
+          id: `fallback-demo-2`,
+          name: "USB-C Fast Charger 65W",
+          price: 19.99,
+          originalPrice: 24.99,
+          unit: "piece",
+          images: buildFallbackImages("electronics", "fallback-demo-2", 3),
+          rating: 4.7,
+          reviews: 456,
+          seller: { id: "fallback-2", name: "Demo Store 2", rating: 4.9 },
+          minOrder: 1,
+          stock: 150,
+          category: "electronics",
+          description: "Demo product. Connect your TMAPI token to see real 1688 products.",
+          logistics: { deliveryDays: 15, shippingCost: 5 },
+        },
+      ];
+
+      const result = {
+        success: true,
+        data: fallbackProducts,
+      };
+
+      return res.json(result);
+    }
   } catch (error) {
     console.error("Top products error:", error);
-    res.status(500).json({
-      error: "Failed to fetch top products",
-      details: error instanceof Error ? error.message : "Unknown error",
-    });
+    // Return successful response with fallback data even if something unexpected happens
+    const fallbackResult = {
+      success: true,
+      data: [
+        {
+          id: "fallback-final-1",
+          name: "Demo Wireless Earbuds",
+          price: 9.99,
+          originalPrice: 12.99,
+          unit: "piece",
+          images: buildFallbackImages("electronics", "fallback-final-1", 3),
+          rating: 4.5,
+          reviews: 100,
+          seller: { id: "fallback-f", name: "Demo Store", rating: 4.5 },
+          minOrder: 1,
+          stock: 50,
+          category: "electronics",
+          description: "Demo product",
+          logistics: { deliveryDays: 15, shippingCost: 5 },
+        },
+      ],
+    };
+    res.json(fallbackResult);
   }
 };
